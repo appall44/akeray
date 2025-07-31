@@ -1,4 +1,5 @@
 "use client";
+import { ExportButton } from "@/components/ui/export-button";
 
 import { useState } from "react";
 import {
@@ -406,20 +407,17 @@ export default function OwnerReportsPage() {
 										<span className="text-sm">Tenant Report</span>
 									</Link>
 								</Button>
-								<Button
-									variant="outline"
-									className="h-20 flex-col space-y-2 bg-transparent border-purple-200 hover:bg-purple-50"
-								>
-									<Link
-										href="/dashboard/owner/reports/lease-report"
-										className="flex flex-col items-center space-y-2"
-									>
-										<Calendar className="h-6 w-6 text-purple-600" />
-										<span className="text-sm">Lease Report</span>
+						<ExportButton
+							endpoint="/reports/overview"
+							filename="property-overview-report"
+							className="border-emerald-300 hover:bg-emerald-50"
+						/>
+						<ExportButton
+							endpoint="/reports/detailed"
+							filename="detailed-property-report"
+							className="border-blue-300 hover:bg-blue-50"
 									</Link>
-								</Button>
-							</div>
-						</CardContent>
+						</ExportButton>
 					</Card>
 				</div>
 			</div>

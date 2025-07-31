@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 
 import { useState } from "react";
 import {
@@ -45,6 +46,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import DashboardLayout from "@/components/dashboard-layout";
 import Link from "next/link";
+import { apiClient } from "@/lib/api";
+import { authManager } from "@/lib/auth";
 
 const properties = [
 	{
@@ -96,6 +99,28 @@ const properties = [
 export default function PropertiesPage() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterStatus, setFilterStatus] = useState("all");
+	const [properties, setProperties] = useState([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		fetchProperties();
+	}, []);
+
+	const fetchProperties = async () => {
+		try {
+			const token = authManager.getToken();
+			if (!token) return;
+
+			const response = await apiClient.getProperties(token);
+			if (response.data) {
+				setProperties(response.data);
+			}
+		} catch (error) {
+			console.error('Error fetching properties:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const filteredProperties = properties.filter((property) => {
 		const matchesSearch =
@@ -126,6 +151,7 @@ export default function PropertiesPage() {
 
 	return (
 		<DashboardLayout
+			loading={loading}
 			userRole="admin"
 			userName="Admin User"
 			userEmail="admin@apms.et"

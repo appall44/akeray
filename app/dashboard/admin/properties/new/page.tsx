@@ -1,4 +1,6 @@
 "use client";
+import { apiClient } from "@/lib/api";
+import { authManager } from "@/lib/auth";
 
 import { useState } from "react";
 import {
@@ -75,15 +77,30 @@ export default function NewPropertyPage() {
 		e.preventDefault();
 		setIsLoading(true);
 
-		// Simulate API call
-		setTimeout(() => {
+		try {
+			const token = authManager.getToken();
+			if (!token) {
+				setError("Authentication required. Please log in again.");
+				setIsLoading(false);
+				return;
+			}
+
+			const response = await apiClient.createProperty(formData, token);
+			
+			if (response.error) {
+				setError(response.error);
+			} else {
+				toast({
+					title: "Property Added Successfully!",
+					description: `${formData.name} has been added to the system`,
+				});
+				router.push("/dashboard/admin/properties");
+			}
+		} catch (error) {
+			setError("Failed to create property. Please try again.");
+		} finally {
 			setIsLoading(false);
-			toast({
-				title: "ንብረት ተጨምሯል / Property Added Successfully",
-				description: `${formData.name} has been added to the system`,
-			});
-			router.push("/dashboard/admin/properties");
-		}, 1500);
+		}
 	};
 
 	const handleInputChange = (field: string, value: string) => {

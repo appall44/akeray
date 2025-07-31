@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { Unit } from 'src/units/entities/unit.entity';
-import { Owner } from 'src/owner/entities/owner.entity';
-import { Role } from 'src/shared/enums/role.enum';
+import { Unit } from '../../units/entities/unit.entity';
+import { Owner } from '../../owner/entities/owner.entity';
+import { Role } from '../../shared/enums/role.enum';
 
 @Entity('properties')
 export class Property {
@@ -44,11 +44,9 @@ export class Property {
   @Column('decimal', { nullable: true })
   squareMeters: number;
 
-  // Store amenities as simple JSON array
   @Column('simple-array', { nullable: true })
   amenities: string[];
 
-  // Store image URLs or paths as simple JSON array
   @Column('simple-array', { nullable: true })
   images: string[];
 
@@ -71,9 +69,15 @@ export class Property {
   ownerId: number;
 
   @ManyToOne(() => Owner, (owner) => owner.properties, { eager: false })
-  @JoinColumn({ name: 'ownerId' }) 
+  @JoinColumn({ name: 'ownerId' })
   owner: Owner;
 
   @OneToMany(() => Unit, (unit) => unit.property, { cascade: true })
   units: Unit[];
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
 }

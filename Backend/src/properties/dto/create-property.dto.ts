@@ -1,10 +1,10 @@
 import {
   IsString,
-  IsInt,
-  IsBoolean,
+  IsNumber,
   IsOptional,
   IsArray,
-  IsNumber,
+  IsBoolean,
+  IsInt,
 } from 'class-validator';
 
 export class CreatePropertyDto {
@@ -65,6 +65,4 @@ export class CreatePropertyDto {
 
   @IsString()
   featuredDuration: string;
-
-  
 }

@@ -1,4 +1,5 @@
 "use client";
+import { apiClient } from "@/lib/api";
 
 import { useState } from "react";
 import {
@@ -61,7 +62,7 @@ export default function TenantSignupPage() {
 		setIsLoading(true);
 		setError("");
 
-		// Validation
+		// Client-side validation
 		if (
 			!formData.fullName ||
 			!formData.fatherName ||
@@ -93,16 +94,24 @@ export default function TenantSignupPage() {
 			return;
 		}
 
-		// Simulate API call
-		setTimeout(() => {
+		try {
+			const response = await apiClient.signupTenant(formData);
+			
+			if (response.error) {
+				setError(response.error);
+			} else {
+				toast({
+					title: "Registration Successful!",
+					description: "Your application has been submitted for review. You will receive SMS confirmation shortly.",
+				});
+				router.push("/signup/approval-wait");
+			}
+		} catch (error) {
+			console.error('Signup error:', error);
+			setError("Registration failed. Please try again.");
+		} finally {
 			setIsLoading(false);
-			toast({
-				title: "Registration Successful!",
-				description:
-					"Your application has been submitted for review. You will receive SMS confirmation shortly.",
-			});
-			router.push("/signup/approval-wait");
-		}, 2000);
+		}
 	};
 
 	return (

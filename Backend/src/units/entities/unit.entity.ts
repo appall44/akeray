@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Property } from '../../properties/entities/property.entity';
-import {UnitStatus} from '../../shared/enums/unit-status.enum'
+import { UnitStatus } from '../../shared/enums/unit-status.enum';
 
 @Entity('units')
 export class Unit {
@@ -19,11 +19,32 @@ export class Unit {
   @Column('decimal')
   price: number;
 
+  @Column({ nullable: true })
+  bedrooms: number;
+
+  @Column({ nullable: true })
+  bathrooms: number;
+
+  @Column('decimal', { nullable: true })
+  squareMeters: number;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ nullable: true })
+  tenantId: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  leaseStartDate: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  leaseEndDate: Date;
+
   @ManyToOne(() => Property, (property) => property.units, {
     nullable: false,
     onDelete: 'CASCADE',
-    eager: true,  
+    eager: true,
   })
-  @JoinColumn({ name: 'property_id' })  
+  @JoinColumn({ name: 'property_id' })
   property: Property;
 }
