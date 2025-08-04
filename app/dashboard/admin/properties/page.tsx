@@ -1,5 +1,4 @@
 "use client";
-import { useState, useEffect } from "react";
 
 import { useState } from "react";
 import {
@@ -39,15 +38,12 @@ import {
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
-	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import DashboardLayout from "@/components/dashboard-layout";
 import Link from "next/link";
-import { apiClient } from "@/lib/api";
-import { authManager } from "@/lib/auth";
 
 const properties = [
 	{
@@ -99,28 +95,6 @@ const properties = [
 export default function PropertiesPage() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterStatus, setFilterStatus] = useState("all");
-	const [properties, setProperties] = useState([]);
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		fetchProperties();
-	}, []);
-
-	const fetchProperties = async () => {
-		try {
-			const token = authManager.getToken();
-			if (!token) return;
-
-			const response = await apiClient.getProperties(token);
-			if (response.data) {
-				setProperties(response.data);
-			}
-		} catch (error) {
-			console.error('Error fetching properties:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const filteredProperties = properties.filter((property) => {
 		const matchesSearch =
@@ -151,36 +125,37 @@ export default function PropertiesPage() {
 
 	return (
 		<DashboardLayout
-			loading={loading}
 			userRole="admin"
 			userName="Admin User"
 			userEmail="admin@apms.et"
 		>
 			<div className="space-y-6">
-				{/* Header */}
 				<div className="flex items-center justify-between">
 					<div>
-						<h1 className="text-3xl font-poppins font-bold text-gray-900">
-							Properties
+						<h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+							ንብረቶች / Properties
 						</h1>
 						<p className="text-gray-600 mt-1">
-							Manage all your properties and units
+							ሁሉንም ንብረቶችዎን እና ክፍሎችዎን ያስተዳድሩ / Manage all your properties and
+							units
 						</p>
 					</div>
-					<Button asChild className="bg-[#4A90E2] hover:bg-[#2F80ED]">
+					<Button
+						asChild
+						className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+					>
 						<Link href="/dashboard/admin/properties/new">
 							<Plus className="h-4 w-4 mr-2" />
-							Add Property
+							ንብረት ጨምር / Add Property
 						</Link>
 					</Button>
 				</div>
 
-				{/* Search and Filter */}
 				<div className="flex flex-col sm:flex-row gap-4">
 					<div className="relative flex-1">
 						<Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
 						<Input
-							placeholder="Search properties, addresses, or owners..."
+							placeholder="ንብረቶችን፣ አድራሻዎችን ወይም ባለቤቶችን ይፈልጉ... / Search properties, addresses, or owners..."
 							className="pl-10"
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
@@ -190,29 +165,30 @@ export default function PropertiesPage() {
 						<DropdownMenuTrigger asChild>
 							<Button variant="outline">
 								<Filter className="h-4 w-4 mr-2" />
-								Filter: {filterStatus === "all" ? "All" : filterStatus}
+								ማጣሪያ: {filterStatus === "all" ? "ሁሉም / All" : filterStatus}
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+							<DropdownMenuLabel>
+								ሁኔታ በመጠቀም ማጣሪያ / Filter by Status
+							</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem onClick={() => setFilterStatus("all")}>
-								All Properties
+								ሁሉም ንብረቶች / All Properties
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => setFilterStatus("active")}>
-								Active
+								ንቁ / Active
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => setFilterStatus("maintenance")}>
-								Under Maintenance
+								በጥገና ላይ / Under Maintenance
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => setFilterStatus("inactive")}>
-								Inactive
+								እንቅስቃሴ-አልባ / Inactive
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
 
-				{/* Properties Grid */}
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{filteredProperties.map((property, index) => (
 						<Card
@@ -250,7 +226,6 @@ export default function PropertiesPage() {
 							</CardHeader>
 
 							<CardContent className="space-y-4">
-								{/* Stats */}
 								<div className="grid grid-cols-3 gap-4 text-center">
 									<div>
 										<div className="flex items-center justify-center mb-1">
@@ -277,13 +252,12 @@ export default function PropertiesPage() {
 											<DollarSign className="h-4 w-4 text-gray-500" />
 										</div>
 										<p className="text-sm font-medium">
-											₹{(property.monthlyRevenue / 1000).toFixed(0)}K
+											{(property.monthlyRevenue / 1000).toFixed(0)}K ETB
 										</p>
 										<p className="text-xs text-gray-500">Monthly</p>
 									</div>
 								</div>
 
-								{/* Owner */}
 								<div className="flex items-center space-x-2 pt-2 border-t">
 									<Avatar className="h-6 w-6">
 										<AvatarImage src="/placeholder-user.jpg" />
@@ -299,7 +273,6 @@ export default function PropertiesPage() {
 									</span>
 								</div>
 
-								{/* Actions */}
 								<div className="flex space-x-2 pt-2">
 									<Button
 										variant="outline"
@@ -357,7 +330,6 @@ export default function PropertiesPage() {
 					))}
 				</div>
 
-				{/* Empty State */}
 				{filteredProperties.length === 0 && (
 					<Card className="text-center py-12">
 						<CardContent>
