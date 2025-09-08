@@ -32,89 +32,111 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import DashboardLayout from "@/components/dashboard-layout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
+const propertyTypes = [
+	{ value: "apartment", label: "Apartment", icon: "🏢" },
+	{ value: "house", label: "House", icon: "🏠" },
+	{ value: "commercial", label: "Commercial", icon: "🏪" },
+	{ value: "office", label: "Office", icon: "🏢" },
+	{ value: "other", label: "Other", icon: "🏠" },
+];
+
+const amenitiesList = [
+	"24/7 Security",
+	"Parking Space",
+	"Elevator Access",
+	"Backup Generator",
+	"Water Tank",
+	"Internet Ready",
+	"Balcony",
+	"Modern Kitchen",
+	"Air Conditioning",
+	"Swimming Pool",
+	"Gym/Fitness Center",
+	"Garden/Green Space",
+];
+
+interface FormData {
+	name: string;
+	address: string;
+	city: string;
+	propertyType: string;
+	customType?: string;
+	hasUnits: boolean;
+	totalUnits: string;
+	description: string;
+	listingType: "rent" | "sell" | "both";
+	monthlyRent: string;
+	deposit: string;
+	minLeaseTerm: string;
+	salePrice: string;
+	pricePerSqm: string;
+	amenities: string[];
+	ownerName: string;
+	ownerEmail: string;
+	ownerPhone: string;
+	images: string[];
+	status: string;
+	units: Array<{
+		unitNumber: string;
+		unitType: string;
+		size: string;
+		bedrooms: string;
+		bathrooms: string;
+		listingType: string;
+		monthlyRent: string;
+		salePrice: string;
+		minLeaseTerm: string;
+		status: string;
+		description: string;
+		images: string[];
+	}>;
+}
+
 export default function NewPropertyPage() {
 	const [isLoading, setIsLoading] = useState(false);
-	const [formData, setFormData] = useState({
+	const [formData, setFormData] = useState<FormData>({
 		name: "",
 		address: "",
 		city: "",
 		propertyType: "",
-		totalUnits: "",
+		customType: "",
+		hasUnits: false,
+		totalUnits: "0",
 		description: "",
+		listingType: "rent",
 		monthlyRent: "",
 		deposit: "",
-		amenities: [] as string[],
+		minLeaseTerm: "6",
+		salePrice: "",
+		pricePerSqm: "",
+		amenities: [],
 		ownerName: "",
 		ownerEmail: "",
 		ownerPhone: "",
-		images: [] as string[],
+		images: [],
 		status: "active",
-		units: [] as Array<{
-			unitNumber: string;
-			unitType: string;
-			size: string;
-			bedrooms: string;
-			bathrooms: string;
-			monthlyRent: string;
-			status: string;
-			description: string;
-			images: string[];
-		}>,
+		units: [],
 	});
 	const router = useRouter();
 	const { toast } = useToast();
 
-	const amenitiesList = [
-		"24/7 Security",
-		"Parking Space",
-		"Elevator Access",
-		"Backup Generator",
-		"Water Tank",
-		"Internet Ready",
-		"Balcony",
-		"Modern Kitchen",
-		"Air Conditioning",
-		"Swimming Pool",
-		"Gym/Fitness Center",
-		"Garden/Green Space",
-	];
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setIsLoading(true);
-
-		const totalUnitsNum = parseInt(formData.totalUnits) || 0;
-		if (
-			["apartment", "commercial"].includes(formData.propertyType) &&
-			totalUnitsNum > 0 &&
-			formData.units.length !== totalUnitsNum
-		) {
-			setIsLoading(false);
-			toast({
-				title: "ስህተት / Error",
-				description: `Please add exactly ${totalUnitsNum} unit(s) for this property.`,
-				variant: "destructive",
-			});
-			return;
-		}
-
-		setTimeout(() => {
-			setIsLoading(false);
-			toast({
-				title: "ንብረት ተጨምሯል / Property Added Successfully",
-				description: `${formData.name} has been added to the system`,
-			});
-			router.push("/dashboard/admin/properties");
-		}, 1500);
-	};
-
 	const handleInputChange = (field: string, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
+	};
+
+	const handleCheckboxChange = (field: string, checked: boolean) => {
+		setFormData((prev) => ({
+			...prev,
+			[field]: checked,
+			totalUnits: field === "hasUnits" && !checked ? "0" : prev.totalUnits,
+			units: field === "hasUnits" && !checked ? [] : prev.units,
+		}));
 	};
 
 	const handleAmenityChange = (amenity: string, checked: boolean) => {
@@ -162,7 +184,10 @@ export default function NewPropertyPage() {
 					size: "",
 					bedrooms: "1",
 					bathrooms: "1",
+					listingType: formData.listingType,
 					monthlyRent: "",
+					salePrice: "",
+					minLeaseTerm: "6",
 					status: "vacant",
 					description: "",
 					images: [],
@@ -178,9 +203,34 @@ export default function NewPropertyPage() {
 		}));
 	};
 
-	const isMultiUnitProperty = ["apartment", "commercial"].includes(
-		formData.propertyType
-	);
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsLoading(true);
+
+		const totalUnitsNum = parseInt(formData.totalUnits) || 0;
+		if (
+			formData.hasUnits &&
+			totalUnitsNum > 0 &&
+			formData.units.length !== totalUnitsNum
+		) {
+			setIsLoading(false);
+			toast({
+				title: "ስህተት / Error",
+				description: `Please add exactly ${totalUnitsNum} unit(s) for this property.`,
+				variant: "destructive",
+			});
+			return;
+		}
+
+		setTimeout(() => {
+			setIsLoading(false);
+			toast({
+				title: "ንብረት ተጨምሯል / Property Added Successfully",
+				description: `${formData.name} has been added to the system`,
+			});
+			router.push("/dashboard/admin/properties");
+		}, 1500);
+	};
 
 	return (
 		<DashboardLayout
@@ -222,6 +272,30 @@ export default function NewPropertyPage() {
 									</CardDescription>
 								</CardHeader>
 								<CardContent className="space-y-4">
+									<div className="space-y-2">
+										<Label className="text-sm font-semibold text-gray-700">
+											Listing Type *
+										</Label>
+										<RadioGroup
+											value={formData.listingType}
+											onValueChange={(value) =>
+												handleInputChange("listingType", value)
+											}
+										>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="rent" id="rent" />
+												<Label htmlFor="rent">For Rent</Label>
+											</div>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="sell" id="sell" />
+												<Label htmlFor="sell">For Sale</Label>
+											</div>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="both" id="both" />
+												<Label htmlFor="both">Both Rent & Sale</Label>
+											</div>
+										</RadioGroup>
+									</div>
 									<div className="space-y-2">
 										<Label htmlFor="name">የንብረት ስም / Property Name *</Label>
 										<Input
@@ -269,31 +343,55 @@ export default function NewPropertyPage() {
 											</Label>
 											<Select
 												value={formData.propertyType}
-												onValueChange={(value) => {
-													handleInputChange("propertyType", value);
-													if (!["apartment", "commercial"].includes(value)) {
-														setFormData((prev) => ({
-															...prev,
-															totalUnits: "1",
-															units: [],
-														}));
-													}
-												}}
+												onValueChange={(value) =>
+													handleInputChange("propertyType", value)
+												}
 											>
 												<SelectTrigger>
 													<SelectValue placeholder="Select type" />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem value="apartment">
-														አፓርትመንት / Apartment
-													</SelectItem>
-													<SelectItem value="house">ቤት / House</SelectItem>
-													<SelectItem value="commercial">
-														ንግድ / Commercial
-													</SelectItem>
-													<SelectItem value="office">ቢሮ / Office</SelectItem>
+													{propertyTypes.map((type) => (
+														<SelectItem key={type.value} value={type.value}>
+															<div className="flex items-center space-x-3">
+																<span className="text-lg">{type.icon}</span>
+																<span>{type.label}</span>
+															</div>
+														</SelectItem>
+													))}
 												</SelectContent>
 											</Select>
+										</div>
+									</div>
+									{formData.propertyType === "other" && (
+										<div className="space-y-2">
+											<Label htmlFor="customType">Custom Property Type *</Label>
+											<Input
+												id="customType"
+												placeholder="e.g., Duplex"
+												value={formData.customType}
+												onChange={(e) =>
+													handleInputChange("customType", e.target.value)
+												}
+												required
+											/>
+										</div>
+									)}
+									<div className="space-y-2">
+										<div className="flex items-center space-x-2">
+											<Checkbox
+												id="hasUnits"
+												checked={formData.hasUnits}
+												onCheckedChange={(checked) =>
+													handleCheckboxChange("hasUnits", checked as boolean)
+												}
+											/>
+											<Label
+												htmlFor="hasUnits"
+												className="text-sm cursor-pointer"
+											>
+												ንብረቱ ክፍሎች አሉት / Property has units
+											</Label>
 										</div>
 									</div>
 									<div className="space-y-2">
@@ -311,10 +409,8 @@ export default function NewPropertyPage() {
 													handleInputChange("totalUnits", e.target.value)
 												}
 												placeholder="Number of units"
-												disabled={["house", "office"].includes(
-													formData.propertyType
-												)}
-												required
+												disabled={!formData.hasUnits}
+												required={formData.hasUnits}
 											/>
 										</div>
 									</div>
@@ -333,51 +429,127 @@ export default function NewPropertyPage() {
 								</CardContent>
 							</Card>
 
-							<Card>
-								<CardHeader>
-									<CardTitle className="flex items-center space-x-2">
-										<DollarSign className="h-5 w-5 text-purple-600" />
-										<span>የገንዘብ መረጃ / Financial Information</span>
-									</CardTitle>
-									<CardDescription>
-										የክራይ እና ተቀማጭ መረጃ / Rent and deposit details
-									</CardDescription>
-								</CardHeader>
-								<CardContent className="space-y-4">
-									<div className="grid grid-cols-2 gap-4">
-										<div className="space-y-2">
-											<Label htmlFor="monthlyRent">
-												ወርሃዊ ክራይ / Monthly Rent (ETB)
-											</Label>
-											<Input
-												id="monthlyRent"
-												type="number"
-												value={formData.monthlyRent}
-												onChange={(e) =>
-													handleInputChange("monthlyRent", e.target.value)
-												}
-												placeholder="15000"
-											/>
+							{(formData.listingType === "rent" ||
+								formData.listingType === "both") && (
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center space-x-2">
+											<DollarSign className="h-5 w-5 text-purple-600" />
+											<span>የክራይ መረጃ / Rental Information</span>
+										</CardTitle>
+										<CardDescription>
+											የክራይ እና ተቀማጭ መረጃ / Rent and deposit details
+										</CardDescription>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										<div className="grid grid-cols-2 gap-4">
+											<div className="space-y-2">
+												<Label htmlFor="monthlyRent">
+													ወርሃዊ ክራይ / Monthly Rent (ETB) *
+												</Label>
+												<Input
+													id="monthlyRent"
+													type="number"
+													value={formData.monthlyRent}
+													onChange={(e) =>
+														handleInputChange("monthlyRent", e.target.value)
+													}
+													placeholder="15000"
+													required
+												/>
+											</div>
+											<div className="space-y-2">
+												<Label htmlFor="deposit">
+													ተቀማጭ / Security Deposit (ETB) *
+												</Label>
+												<Input
+													id="deposit"
+													type="number"
+													value={formData.deposit}
+													onChange={(e) =>
+														handleInputChange("deposit", e.target.value)
+													}
+													placeholder="30000"
+													required
+												/>
+											</div>
 										</div>
 										<div className="space-y-2">
-											<Label htmlFor="deposit">
-												ተቀማጭ / Security Deposit (ETB)
+											<Label htmlFor="minLeaseTerm">
+												Minimum Lease Term (Months) *
 											</Label>
-											<Input
-												id="deposit"
-												type="number"
-												value={formData.deposit}
-												onChange={(e) =>
-													handleInputChange("deposit", e.target.value)
+											<Select
+												value={formData.minLeaseTerm}
+												onValueChange={(value) =>
+													handleInputChange("minLeaseTerm", value)
 												}
-												placeholder="30000"
-											/>
+											>
+												<SelectTrigger>
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="1">1 Month</SelectItem>
+													<SelectItem value="3">3 Months</SelectItem>
+													<SelectItem value="6">6 Months</SelectItem>
+													<SelectItem value="12">12 Months</SelectItem>
+													<SelectItem value="24">24 Months</SelectItem>
+												</SelectContent>
+											</Select>
 										</div>
-									</div>
-								</CardContent>
-							</Card>
+									</CardContent>
+								</Card>
+							)}
 
-							{isMultiUnitProperty && parseInt(formData.totalUnits) > 0 && (
+							{(formData.listingType === "sell" ||
+								formData.listingType === "both") && (
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center space-x-2">
+											<DollarSign className="h-5 w-5 text-emerald-600" />
+											<span>የሽያጭ መረጃ / Sale Information</span>
+										</CardTitle>
+										<CardDescription>
+											የሽያጭ ዋጋ እና ዝርዝር / Sale price and details
+										</CardDescription>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										<div className="grid grid-cols-2 gap-4">
+											<div className="space-y-2">
+												<Label htmlFor="salePrice">
+													የሽያጭ ዋጋ / Sale Price (ETB) *
+												</Label>
+												<Input
+													id="salePrice"
+													type="number"
+													value={formData.salePrice}
+													onChange={(e) =>
+														handleInputChange("salePrice", e.target.value)
+													}
+													placeholder="5000000"
+													required
+												/>
+											</div>
+											<div className="space-y-2">
+												<Label htmlFor="pricePerSqm">
+													Price per Sqm (ETB) *
+												</Label>
+												<Input
+													id="pricePerSqm"
+													type="number"
+													value={formData.pricePerSqm}
+													onChange={(e) =>
+														handleInputChange("pricePerSqm", e.target.value)
+													}
+													placeholder="75000"
+													required
+												/>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+							)}
+
+							{formData.hasUnits && parseInt(formData.totalUnits) > 0 && (
 								<Card>
 									<CardHeader>
 										<CardTitle className="flex items-center space-x-2">
@@ -419,6 +591,37 @@ export default function NewPropertyPage() {
 														<Trash2 className="h-4 w-4" />
 														አስወግድ / Remove
 													</Button>
+												</div>
+												<div className="space-y-2">
+													<Label>Unit Listing Type *</Label>
+													<RadioGroup
+														value={unit.listingType}
+														onValueChange={(value) =>
+															handleUnitChange(index, "listingType", value)
+														}
+													>
+														<div className="flex items-center space-x-2">
+															<RadioGroupItem
+																value="rent"
+																id={`rent-${index}`}
+															/>
+															<Label htmlFor={`rent-${index}`}>For Rent</Label>
+														</div>
+														<div className="flex items-center space-x-2">
+															<RadioGroupItem
+																value="sell"
+																id={`sell-${index}`}
+															/>
+															<Label htmlFor={`sell-${index}`}>For Sale</Label>
+														</div>
+														<div className="flex items-center space-x-2">
+															<RadioGroupItem
+																value="both"
+																id={`both-${index}`}
+															/>
+															<Label htmlFor={`both-${index}`}>Both</Label>
+														</div>
+													</RadioGroup>
 												</div>
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 													<div className="space-y-2">
@@ -520,25 +723,6 @@ export default function NewPropertyPage() {
 														</Select>
 													</div>
 													<div className="space-y-2">
-														<Label htmlFor={`monthlyRent-${index}`}>
-															ወርሃዊ ክራይ / Monthly Rent (ETB) *
-														</Label>
-														<Input
-															id={`monthlyRent-${index}`}
-															type="number"
-															value={unit.monthlyRent}
-															onChange={(e) =>
-																handleUnitChange(
-																	index,
-																	"monthlyRent",
-																	e.target.value
-																)
-															}
-															placeholder="e.g., 10000"
-															required
-														/>
-													</div>
-													<div className="space-y-2">
 														<Label htmlFor={`status-${index}`}>
 															ሁኔታ / Status *
 														</Label>
@@ -563,6 +747,74 @@ export default function NewPropertyPage() {
 														</Select>
 													</div>
 												</div>
+												{(unit.listingType === "rent" ||
+													unit.listingType === "both") && (
+													<div className="grid grid-cols-2 gap-4">
+														<div className="space-y-2">
+															<Label htmlFor={`monthlyRent-${index}`}>
+																ወርሃዊ ክራይ / Monthly Rent (ETB) *
+															</Label>
+															<Input
+																id={`monthlyRent-${index}`}
+																type="number"
+																value={unit.monthlyRent}
+																onChange={(e) =>
+																	handleUnitChange(
+																		index,
+																		"monthlyRent",
+																		e.target.value
+																	)
+																}
+																placeholder="e.g., 10000"
+																required
+															/>
+														</div>
+														<div className="space-y-2">
+															<Label htmlFor={`minLeaseTerm-${index}`}>
+																Min Lease Term (Months) *
+															</Label>
+															<Select
+																value={unit.minLeaseTerm}
+																onValueChange={(value) =>
+																	handleUnitChange(index, "minLeaseTerm", value)
+																}
+															>
+																<SelectTrigger>
+																	<SelectValue />
+																</SelectTrigger>
+																<SelectContent>
+																	<SelectItem value="1">1 Month</SelectItem>
+																	<SelectItem value="3">3 Months</SelectItem>
+																	<SelectItem value="6">6 Months</SelectItem>
+																	<SelectItem value="12">12 Months</SelectItem>
+																	<SelectItem value="24">24 Months</SelectItem>
+																</SelectContent>
+															</Select>
+														</div>
+													</div>
+												)}
+												{(unit.listingType === "sell" ||
+													unit.listingType === "both") && (
+													<div className="space-y-2">
+														<Label htmlFor={`salePrice-${index}`}>
+															የሽያጭ ዋጋ / Sale Price (ETB) *
+														</Label>
+														<Input
+															id={`salePrice-${index}`}
+															type="number"
+															value={unit.salePrice}
+															onChange={(e) =>
+																handleUnitChange(
+																	index,
+																	"salePrice",
+																	e.target.value
+																)
+															}
+															placeholder="e.g., 2500000"
+															required
+														/>
+													</div>
+												)}
 												<div className="space-y-2">
 													<Label htmlFor={`description-${index}`}>
 														መግለጫ / Description
@@ -719,7 +971,7 @@ export default function NewPropertyPage() {
 									<div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
 										<Camera className="h-12 w-12 text-gray-400 mx-auto mb-4" />
 										<p className="text-gray-600 mb-2">
-											ምስሎችን ይጎትቱ ወይም ይጫኑ / Drag images here or click to upload
+											ምስሎችን ይጎትቱ ወዯይም ይጫኑ / Drag images here or click to upload
 										</p>
 										<Button
 											variant="outline"

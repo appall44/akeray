@@ -1,5 +1,4 @@
 "use client";
-import { useState, useEffect } from "react";
 
 import {
 	Building,
@@ -28,8 +27,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/dashboard-layout";
 import Link from "next/link";
-import { apiClient } from "@/lib/api";
-import { authManager } from "@/lib/auth";
 
 const statsCards = [
 	{
@@ -145,45 +142,8 @@ const occupancyData = [
 ];
 
 export default function AdminDashboard() {
-	const [stats, setStats] = useState({
-		totalProperties: 0,
-		activeProperties: 0,
-		totalUnits: 0,
-		occupiedUnits: 0,
-		occupancyRate: 0,
-	});
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		fetchDashboardData();
-	}, []);
-
-	const fetchDashboardData = async () => {
-		try {
-			const token = authManager.getToken();
-			if (!token) return;
-
-			const response = await apiClient.getPropertyStats(token);
-			if (response.data) {
-				setStats(response.data);
-			}
-		} catch (error) {
-			console.error('Error fetching dashboard data:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	// Update stats cards with dynamic data
-	const updatedStatsCards = statsCards.map(card => {
-		if (card.title === "Total Properties") return { ...card, value: stats.totalProperties.toString() };
-		if (card.title === "Active Tenants") return { ...card, value: stats.occupiedUnits.toString() };
-		return card;
-	});
-
 	return (
 		<DashboardLayout
-			loading={loading}
 			userRole="admin"
 			userName="Admin Aseffa Bekele"
 			userEmail="aseffa@akeray.et"
@@ -230,7 +190,7 @@ export default function AdminDashboard() {
 
 				{/* Stats Cards */}
 				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-					{updatedStatsCards.map((stat, index) => (
+					{statsCards.map((stat, index) => (
 						<div
 							key={index}
 							className="animate-in fade-in slide-in-from-bottom-4 duration-700"

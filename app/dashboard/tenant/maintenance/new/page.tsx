@@ -9,6 +9,10 @@ import {
 	Camera,
 	Upload,
 	X,
+	ChevronDown,
+	ChevronRight,
+	Home,
+	Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +35,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import DashboardLayout from "@/components/dashboard-layout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -118,14 +128,45 @@ const priorities = [
 	},
 ];
 
-// Mock tenant's property info
-const tenantPropertyInfo = {
-	property: "Sunrise Apartments",
-	unit: "Apartment 3B",
-	address: "Bole Road, Near Atlas Hotel, Addis Ababa",
-	landlord: "Mulugeta Assefa",
-	landlordPhone: "+251911123456",
-};
+// Mock tenant's rented properties
+const tenantProperties = [
+	{
+		id: 1,
+		name: "Sunrise Apartments",
+		address: "Bole Road, Addis Ababa",
+		hasUnits: true,
+		units: [
+			{ id: "3B", name: "Unit 3B", rent: 18000 },
+			{ id: "4A", name: "Unit 4A", rent: 20000 },
+		],
+		landlord: {
+			name: "Mulugeta Assefa",
+			phone: "+251911123456",
+		},
+	},
+	{
+		id: 2,
+		name: "Green Valley Villa",
+		address: "Kazanchis, Addis Ababa",
+		hasUnits: false,
+		units: [],
+		landlord: {
+			name: "Sarah Johnson",
+			phone: "+251922345678",
+		},
+	},
+	{
+		id: 3,
+		name: "City Center Complex",
+		address: "Piassa, Addis Ababa",
+		hasUnits: true,
+		units: [{ id: "2C", name: "Unit 2C", rent: 25000 }],
+		landlord: {
+			name: "Ahmed Hassan",
+			phone: "+251933456789",
+		},
+	},
+];
 
 export default function TenantNewMaintenanceRequestPage() {
 	const [formData, setFormData] = useState({
@@ -138,9 +179,12 @@ export default function TenantNewMaintenanceRequestPage() {
 		preferredTime: "",
 		contactPhone: "",
 		urgentContact: false,
+		selectedProperties: [] as Array<{ propertyId: number; unitId?: string }>,
+		bulkRequest: false,
 	});
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
+	const [expandedProperties, setExpandedProperties] = useState<number[]>([]);
 	const router = useRouter();
 	const { toast } = useToast();
 
@@ -165,6 +209,62 @@ export default function TenantNewMaintenanceRequestPage() {
 		setFormData({ ...formData, images: newImages });
 	};
 
+	const togglePropertyExpansion = (propertyId: number) => {
+		setExpandedProperties((prev) =>
+			prev.includes(propertyId)
+				? prev.filter((id) => id !== propertyId)
+				: [...prev, propertyId]
+		);
+	};
+
+	const handlePropertySelection = (propertyId: number, unitId?: string) => {
+		const selectionKey = { propertyId, unitId };
+		const isSelected = formData.selectedProperties.some(
+			(p) => p.propertyId === propertyId && p.unitId === unitId
+		);
+
+		if (isSelected) {
+			setFormData({
+				...formData,
+				selectedProperties: formData.selectedProperties.filter(
+					(p) => !(p.propertyId === propertyId && p.unitId === unitId)
+				),
+			});
+		} else {
+			setFormData({
+				...formData,
+				selectedProperties: [...formData.selectedProperties, selectionKey],
+			});
+		}
+	};
+
+	const getSelectedPropertyNames = () => {
+		return formData.selectedProperties
+			.map((selection) => {
+				const property = tenantProperties.find(
+					(p) => p.id === selection.propertyId
+				);
+				if (!property) return "";
+
+				if (selection.unitId) {
+					const unit = property.units.find((u) => u.id === selection.unitId);
+					return `${property.name} - ${unit?.name}`;
+				}
+				return property.name;
+			})
+			.join(", ");
+	};
+
+	const canSubmitBulkRequest = () => {
+		return (
+			formData.selectedProperties.length > 1 &&
+			formData.title &&
+			formData.description &&
+			formData.category &&
+			formData.priority
+		);
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
@@ -175,9 +275,12 @@ export default function TenantNewMaintenanceRequestPage() {
 			!formData.title ||
 			!formData.description ||
 			!formData.category ||
-			!formData.priority
+			!formData.priority ||
+			formData.selectedProperties.length === 0
 		) {
-			setError("Please fill in all required fields");
+			setError(
+				"Please fill in all required fields and select at least one property/unit"
+			);
 			setIsLoading(false);
 			return;
 		}
@@ -185,9 +288,12 @@ export default function TenantNewMaintenanceRequestPage() {
 		// Simulate API call
 		setTimeout(() => {
 			setIsLoading(false);
+			const requestCount = formData.bulkRequest
+				? 1
+				: formData.selectedProperties.length;
 			toast({
-				title: "Maintenance Request Submitted!",
-				description: `Your request "${formData.title}" has been submitted successfully. You'll receive updates via SMS.`,
+				title: "Maintenance Request(s) Submitted!",
+				description: `${requestCount} maintenance request(s) for "${formData.title}" have been submitted successfully. You'll receive updates via SMS.`,
 			});
 			router.push("/dashboard/tenant/maintenance");
 		}, 2000);
@@ -219,10 +325,11 @@ export default function TenantNewMaintenanceRequestPage() {
 							Submit Maintenance Request
 						</h1>
 						<p className="text-lg text-gray-600">
-							Report an issue that needs attention in your apartment
+							Report an issue that needs attention in your rented properties
 						</p>
 						<p className="text-sm text-gray-500">
-							Provide detailed information to help us resolve the issue quickly
+							Select properties/units and provide detailed information for quick
+							resolution
 						</p>
 					</div>
 				</div>
@@ -231,9 +338,204 @@ export default function TenantNewMaintenanceRequestPage() {
 					<div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
 						{/* Main Form */}
 						<div className="xl:col-span-2 space-y-8">
-							{/* Request Details */}
+							{/* Property/Unit Selection */}
 							<div
 								className="animate-in fade-in slide-in-from-left-4 duration-700 delay-300"
+								style={{ animationFillMode: "forwards" }}
+							>
+								<Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+									<CardHeader>
+										<CardTitle className="text-xl font-bold text-gray-900">
+											Select Property/Unit
+										</CardTitle>
+										<CardDescription>
+											Choose which property or unit needs maintenance
+										</CardDescription>
+									</CardHeader>
+									<CardContent className="space-y-6">
+										{error && (
+											<Alert variant="destructive">
+												<AlertDescription>{error}</AlertDescription>
+											</Alert>
+										)}
+
+										<div className="space-y-4">
+											{tenantProperties.map((property) => (
+												<div
+													key={property.id}
+													className="border rounded-xl p-4 bg-gray-50"
+												>
+													<div className="space-y-3">
+														{/* Property Header */}
+														<div className="flex items-center justify-between">
+															<div className="flex items-center space-x-3">
+																<Building className="h-5 w-5 text-blue-600" />
+																<div>
+																	<h4 className="font-semibold text-gray-900">
+																		{property.name}
+																	</h4>
+																	<p className="text-sm text-gray-600">
+																		{property.address}
+																	</p>
+																</div>
+															</div>
+															{property.hasUnits && (
+																<Button
+																	type="button"
+																	variant="ghost"
+																	size="sm"
+																	onClick={() =>
+																		togglePropertyExpansion(property.id)
+																	}
+																>
+																	{expandedProperties.includes(property.id) ? (
+																		<ChevronDown className="h-4 w-4" />
+																	) : (
+																		<ChevronRight className="h-4 w-4" />
+																	)}
+																</Button>
+															)}
+														</div>
+
+														{/* Property Selection (for properties without units) */}
+														{!property.hasUnits && (
+															<div className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-emerald-300 transition-colors">
+																<Checkbox
+																	id={`property-${property.id}`}
+																	checked={formData.selectedProperties.some(
+																		(p) =>
+																			p.propertyId === property.id && !p.unitId
+																	)}
+																	onCheckedChange={() =>
+																		handlePropertySelection(property.id)
+																	}
+																/>
+																<Label
+																	htmlFor={`property-${property.id}`}
+																	className="flex-1 cursor-pointer"
+																>
+																	<div className="flex items-center space-x-3">
+																		<Home className="h-5 w-5 text-emerald-600" />
+																		<div>
+																			<p className="font-medium text-gray-900">
+																				Entire Property
+																			</p>
+																			<p className="text-sm text-gray-600">
+																				Villa/House - No separate units
+																			</p>
+																		</div>
+																	</div>
+																</Label>
+															</div>
+														)}
+
+														{/* Units Selection (collapsible) */}
+														{property.hasUnits && (
+															<Collapsible
+																open={expandedProperties.includes(property.id)}
+															>
+																<CollapsibleContent className="space-y-2">
+																	{property.units.map((unit) => (
+																		<div
+																			key={unit.id}
+																			className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-emerald-300 transition-colors ml-6"
+																		>
+																			<Checkbox
+																				id={`unit-${property.id}-${unit.id}`}
+																				checked={formData.selectedProperties.some(
+																					(p) =>
+																						p.propertyId === property.id &&
+																						p.unitId === unit.id
+																				)}
+																				onCheckedChange={() =>
+																					handlePropertySelection(
+																						property.id,
+																						unit.id
+																					)
+																				}
+																			/>
+																			<Label
+																				htmlFor={`unit-${property.id}-${unit.id}`}
+																				className="flex-1 cursor-pointer"
+																			>
+																				<div className="flex items-center justify-between">
+																					<div className="flex items-center space-x-3">
+																						<Home className="h-4 w-4 text-blue-600" />
+																						<div>
+																							<p className="font-medium text-gray-900">
+																								{unit.name}
+																							</p>
+																							<p className="text-sm text-gray-600">
+																								{unit.rent.toLocaleString()}{" "}
+																								ETB/month
+																							</p>
+																						</div>
+																					</div>
+																					<Badge className="bg-emerald-100 text-emerald-800">
+																						Rented
+																					</Badge>
+																				</div>
+																			</Label>
+																		</div>
+																	))}
+																</CollapsibleContent>
+															</Collapsible>
+														)}
+													</div>
+												</div>
+											))}
+										</div>
+
+										{/* Bulk Request Option */}
+										{formData.selectedProperties.length > 1 && (
+											<div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+												<div className="flex items-center space-x-3">
+													<Checkbox
+														id="bulkRequest"
+														checked={formData.bulkRequest}
+														onCheckedChange={(checked) =>
+															setFormData({
+																...formData,
+																bulkRequest: checked as boolean,
+															})
+														}
+													/>
+													<Label
+														htmlFor="bulkRequest"
+														className="cursor-pointer"
+													>
+														<div>
+															<p className="font-semibold text-blue-800">
+																Submit as Single Request
+															</p>
+															<p className="text-sm text-blue-700">
+																Same issue affects multiple properties/units
+															</p>
+														</div>
+													</Label>
+												</div>
+											</div>
+										)}
+
+										{/* Selected Properties Summary */}
+										{formData.selectedProperties.length > 0 && (
+											<div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+												<h4 className="font-semibold text-emerald-800 mb-2">
+													Selected Properties/Units (
+													{formData.selectedProperties.length})
+												</h4>
+												<p className="text-emerald-700 text-sm">
+													{getSelectedPropertyNames()}
+												</p>
+											</div>
+										)}
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* Request Details */}
+							<div
+								className="animate-in fade-in slide-in-from-left-4 duration-700 delay-600"
 								style={{ animationFillMode: "forwards" }}
 							>
 								<Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
@@ -246,35 +548,6 @@ export default function TenantNewMaintenanceRequestPage() {
 										</CardDescription>
 									</CardHeader>
 									<CardContent className="space-y-6">
-										{error && (
-											<Alert variant="destructive">
-												<AlertDescription>{error}</AlertDescription>
-											</Alert>
-										)}
-
-										<div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-											<div className="flex items-center space-x-3 mb-3">
-												<Building className="h-5 w-5 text-blue-600" />
-												<h4 className="font-semibold text-blue-800">
-													Your Property Information
-												</h4>
-											</div>
-											<div className="grid grid-cols-2 gap-4 text-sm">
-												<div>
-													<p className="text-blue-700 font-medium">Property:</p>
-													<p className="text-blue-600">
-														{tenantPropertyInfo.property}
-													</p>
-												</div>
-												<div>
-													<p className="text-blue-700 font-medium">Unit:</p>
-													<p className="text-blue-600">
-														{tenantPropertyInfo.unit}
-													</p>
-												</div>
-											</div>
-										</div>
-
 										<div className="space-y-2">
 											<Label
 												htmlFor="title"
@@ -322,7 +595,7 @@ export default function TenantNewMaintenanceRequestPage() {
 													htmlFor="location"
 													className="text-sm font-semibold text-gray-700"
 												>
-													Specific Location in Unit
+													Specific Location
 												</Label>
 												<Input
 													id="location"
@@ -397,7 +670,7 @@ export default function TenantNewMaintenanceRequestPage() {
 
 							{/* Category & Priority */}
 							<div
-								className="animate-in fade-in slide-in-from-left-4 duration-700 delay-600"
+								className="animate-in fade-in slide-in-from-left-4 duration-700 delay-900"
 								style={{ animationFillMode: "forwards" }}
 							>
 								<Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
@@ -503,7 +776,7 @@ export default function TenantNewMaintenanceRequestPage() {
 
 							{/* Images Upload */}
 							<div
-								className="animate-in fade-in slide-in-from-left-4 duration-700 delay-900"
+								className="animate-in fade-in slide-in-from-left-4 duration-700 delay-1200"
 								style={{ animationFillMode: "forwards" }}
 							>
 								<Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
@@ -598,17 +871,48 @@ export default function TenantNewMaintenanceRequestPage() {
 										</CardDescription>
 									</CardHeader>
 									<CardContent className="space-y-4">
-										{selectedCategory && (
+										{formData.selectedProperties.length > 0 && (
 											<div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+												<div className="flex items-center space-x-3 mb-2">
+													<Building className="h-5 w-5 text-blue-600" />
+													<h4 className="font-semibold text-blue-800">
+														Selected Properties
+													</h4>
+												</div>
+												<div className="space-y-1 text-sm">
+													{formData.selectedProperties.map(
+														(selection, index) => {
+															const property = tenantProperties.find(
+																(p) => p.id === selection.propertyId
+															);
+															const unit = selection.unitId
+																? property?.units.find(
+																		(u) => u.id === selection.unitId
+																  )
+																: null;
+															return (
+																<p key={index} className="text-blue-700">
+																	• {property?.name}
+																	{unit ? ` - ${unit.name}` : ""}
+																</p>
+															);
+														}
+													)}
+												</div>
+											</div>
+										)}
+
+										{selectedCategory && (
+											<div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
 												<div className="flex items-center space-x-3 mb-2">
 													<span className="text-2xl">
 														{selectedCategory.icon}
 													</span>
-													<h4 className="font-semibold text-blue-800">
+													<h4 className="font-semibold text-emerald-800">
 														{selectedCategory.label}
 													</h4>
 												</div>
-												<p className="text-blue-700 text-sm">
+												<p className="text-emerald-700 text-sm">
 													{selectedCategory.description}
 												</p>
 											</div>
@@ -656,6 +960,19 @@ export default function TenantNewMaintenanceRequestPage() {
 											</div>
 										)}
 
+										{formData.bulkRequest &&
+											formData.selectedProperties.length > 1 && (
+												<div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
+													<h4 className="font-semibold text-purple-800 mb-2">
+														Bulk Request
+													</h4>
+													<p className="text-purple-700 text-sm">
+														This will create one request for all selected
+														properties/units with the same issue.
+													</p>
+												</div>
+											)}
+
 										<div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
 											<h4 className="font-semibold text-gray-800 mb-3">
 												What happens next?
@@ -663,7 +980,7 @@ export default function TenantNewMaintenanceRequestPage() {
 											<div className="space-y-2 text-sm text-gray-600">
 												<div className="flex items-center space-x-2">
 													<div className="w-2 h-2 bg-emerald-500 rounded-full" />
-													<span>Request submitted to property manager</span>
+													<span>Request submitted to property manager(s)</span>
 												</div>
 												<div className="flex items-center space-x-2">
 													<div className="w-2 h-2 bg-blue-500 rounded-full" />
@@ -682,54 +999,12 @@ export default function TenantNewMaintenanceRequestPage() {
 									</CardContent>
 								</Card>
 							</div>
-
-							{/* Emergency Contact */}
-							<div
-								className="animate-in fade-in slide-in-from-right-4 duration-700 delay-900"
-								style={{ animationFillMode: "forwards" }}
-							>
-								<Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm">
-									<CardHeader>
-										<CardTitle className="text-xl font-bold text-gray-900">
-											Emergency Contact
-										</CardTitle>
-										<CardDescription>
-											For urgent issues that need immediate attention
-										</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<div className="bg-red-50 p-4 rounded-xl border border-red-200">
-											<h4 className="font-semibold text-red-800 mb-3">
-												🚨 Emergency Situations
-											</h4>
-											<p className="text-red-700 text-sm mb-3">
-												For water leaks, electrical hazards, or security issues,
-												call immediately:
-											</p>
-											<div className="space-y-2">
-												<div className="flex items-center space-x-2">
-													<span className="text-red-600 font-bold">📞</span>
-													<span className="font-semibold text-red-800">
-														{tenantPropertyInfo.landlordPhone}
-													</span>
-												</div>
-												<div className="flex items-center space-x-2">
-													<span className="text-red-600 font-bold">🏠</span>
-													<span className="text-red-700 text-sm">
-														{tenantPropertyInfo.landlord}
-													</span>
-												</div>
-											</div>
-										</div>
-									</CardContent>
-								</Card>
-							</div>
 						</div>
 					</div>
 
 					{/* Submit Button */}
 					<div
-						className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1200"
+						className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1500"
 						style={{ animationFillMode: "forwards" }}
 					>
 						<div className="flex justify-end space-x-4 mt-8">
@@ -754,7 +1029,15 @@ export default function TenantNewMaintenanceRequestPage() {
 								) : (
 									<div className="flex items-center space-x-3">
 										<Save className="h-5 w-5" />
-										<span>Submit Request</span>
+										<span>
+											Submit{" "}
+											{formData.bulkRequest &&
+											formData.selectedProperties.length > 1
+												? "Bulk Request"
+												: formData.selectedProperties.length > 1
+												? `${formData.selectedProperties.length} Requests`
+												: "Request"}
+										</span>
 									</div>
 								)}
 							</Button>

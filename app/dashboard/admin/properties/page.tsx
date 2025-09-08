@@ -12,6 +12,8 @@ import {
 	MapPin,
 	Users,
 	DollarSign,
+	Home,
+	Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,7 @@ import {
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
+	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
 	AlertDialogTrigger,
@@ -52,7 +55,11 @@ const properties = [
 		address: "123 Main Street, Downtown",
 		totalUnits: 20,
 		occupiedUnits: 18,
-		monthlyRevenue: 45000,
+		monthlyRevenue: 450000,
+		listingType: "rent",
+		salePrice: null,
+		pricePerSqm: null,
+		minLeaseTerm: 12,
 		owner: "John Smith",
 		status: "active",
 		image: "/placeholder.svg?height=200&width=300",
@@ -63,7 +70,11 @@ const properties = [
 		address: "456 Oak Avenue, Suburbs",
 		totalUnits: 30,
 		occupiedUnits: 24,
-		monthlyRevenue: 72000,
+		monthlyRevenue: 720000,
+		listingType: "both",
+		salePrice: 15000000,
+		pricePerSqm: 85000,
+		minLeaseTerm: 6,
 		owner: "Sarah Johnson",
 		status: "active",
 		image: "/placeholder.svg?height=200&width=300",
@@ -74,7 +85,11 @@ const properties = [
 		address: "789 Business District",
 		totalUnits: 15,
 		occupiedUnits: 15,
-		monthlyRevenue: 60000,
+		monthlyRevenue: null,
+		listingType: "sell",
+		salePrice: 25000000,
+		pricePerSqm: 120000,
+		minLeaseTerm: null,
 		owner: "Michael Brown",
 		status: "active",
 		image: "/placeholder.svg?height=200&width=300",
@@ -85,7 +100,10 @@ const properties = [
 		address: "321 River Road, Waterfront",
 		totalUnits: 25,
 		occupiedUnits: 22,
-		monthlyRevenue: 88000,
+		monthlyRevenue: 880000,
+		listingType: "rent",
+		salePrice: null,
+		minLeaseTerm: 12,
 		owner: "Emily Davis",
 		status: "maintenance",
 		image: "/placeholder.svg?height=200&width=300",
@@ -95,6 +113,7 @@ const properties = [
 export default function PropertiesPage() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterStatus, setFilterStatus] = useState("all");
+	const [filterListingType, setFilterListingType] = useState("all");
 
 	const filteredProperties = properties.filter((property) => {
 		const matchesSearch =
@@ -103,7 +122,11 @@ export default function PropertiesPage() {
 			property.owner.toLowerCase().includes(searchTerm.toLowerCase());
 		const matchesFilter =
 			filterStatus === "all" || property.status === filterStatus;
-		return matchesSearch && matchesFilter;
+		const matchesListingType =
+			filterListingType === "all" ||
+			property.listingType === filterListingType ||
+			property.listingType === "both";
+		return matchesSearch && matchesFilter && matchesListingType;
 	});
 
 	const getOccupancyRate = (occupied: number, total: number) => {
@@ -161,32 +184,60 @@ export default function PropertiesPage() {
 							onChange={(e) => setSearchTerm(e.target.value)}
 						/>
 					</div>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="outline">
-								<Filter className="h-4 w-4 mr-2" />
-								ማጣሪያ: {filterStatus === "all" ? "ሁሉም / All" : filterStatus}
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuLabel>
-								ሁኔታ በመጠቀም ማጣሪያ / Filter by Status
-							</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem onClick={() => setFilterStatus("all")}>
-								ሁሉም ንብረቶች / All Properties
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => setFilterStatus("active")}>
-								ንቁ / Active
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => setFilterStatus("maintenance")}>
-								በጥገና ላይ / Under Maintenance
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => setFilterStatus("inactive")}>
-								እንቅስቃሴ-አልባ / Inactive
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+					<div className="flex space-x-2">
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="outline">
+									<Filter className="h-4 w-4 mr-2" />
+									Status: {filterStatus === "all" ? "All" : filterStatus}
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem onClick={() => setFilterStatus("all")}>
+									All Properties
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setFilterStatus("active")}>
+									Active
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => setFilterStatus("maintenance")}
+								>
+									Under Maintenance
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setFilterStatus("inactive")}>
+									Inactive
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="outline">
+									<Tag className="h-4 w-4 mr-2" />
+									Type:{" "}
+									{filterListingType === "all" ? "All" : filterListingType}
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuLabel>Filter by Listing Type</DropdownMenuLabel>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem onClick={() => setFilterListingType("all")}>
+									All Types
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setFilterListingType("rent")}>
+									For Rent
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setFilterListingType("sell")}>
+									For Sale
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setFilterListingType("both")}>
+									Both
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -208,6 +259,21 @@ export default function PropertiesPage() {
 									)}`}
 								>
 									{property.status}
+								</Badge>
+								<Badge
+									className={`absolute top-3 left-3 ${
+										property.listingType === "rent"
+											? "bg-blue-100 text-blue-800"
+											: property.listingType === "sell"
+											? "bg-emerald-100 text-emerald-800"
+											: "bg-purple-100 text-purple-800"
+									}`}
+								>
+									{property.listingType === "rent"
+										? "For Rent"
+										: property.listingType === "sell"
+										? "For Sale"
+										: "Rent & Sale"}
 								</Badge>
 							</div>
 
@@ -249,12 +315,39 @@ export default function PropertiesPage() {
 									</div>
 									<div>
 										<div className="flex items-center justify-center mb-1">
-											<DollarSign className="h-4 w-4 text-gray-500" />
+											{property.listingType === "sell" ||
+											property.listingType === "both" ? (
+												<Tag className="h-4 w-4 text-gray-500" />
+											) : (
+												<DollarSign className="h-4 w-4 text-gray-500" />
+											)}
 										</div>
-										<p className="text-sm font-medium">
-											{(property.monthlyRevenue / 1000).toFixed(0)}K ETB
-										</p>
-										<p className="text-xs text-gray-500">Monthly</p>
+										{property.listingType === "sell" ? (
+											<>
+												<p className="text-sm font-medium">
+													{property.salePrice
+														? (property.salePrice / 1000000).toFixed(1) + "M"
+														: "N/A"}
+												</p>
+												<p className="text-xs text-gray-500">Sale Price</p>
+											</>
+										) : property.listingType === "both" ? (
+											<>
+												<p className="text-sm font-medium">
+													{property.monthlyRevenue
+														? (property.monthlyRevenue / 1000).toFixed(0) + "K"
+														: "N/A"}
+												</p>
+												<p className="text-xs text-gray-500">Rent/Sale</p>
+											</>
+										) : (
+											<>
+												<p className="text-sm font-medium">
+													{(property.monthlyRevenue / 1000).toFixed(0)}K ETB
+												</p>
+												<p className="text-xs text-gray-500">Monthly</p>
+											</>
+										)}
 									</div>
 								</div>
 
@@ -272,6 +365,14 @@ export default function PropertiesPage() {
 										Owner: {property.owner}
 									</span>
 								</div>
+
+								{property.listingType !== "sell" && property.minLeaseTerm && (
+									<div className="text-center p-2 rounded-lg bg-blue-50 border border-blue-200">
+										<p className="text-xs text-blue-700">
+											Min Lease: {property.minLeaseTerm} months
+										</p>
+									</div>
+								)}
 
 								<div className="flex space-x-2 pt-2">
 									<Button

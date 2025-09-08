@@ -1,5 +1,4 @@
 "use client";
-import { ExportButton } from "@/components/ui/export-button";
 
 import { useState } from "react";
 import {
@@ -179,8 +178,12 @@ export default function LeaseDetailsPage() {
 						<div className="flex space-x-3">
 							<Button
 								variant="outline"
-								className="border-emerald-300 hover:bg-emerald-50"
+								className="border-emerald-300 hover:bg-emerald-50 bg-transparent"
 							>
+								<Download className="h-4 w-4 mr-2" />
+								Download PDF
+							</Button>
+							<Button
 								asChild
 								className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-lg transform hover:scale-105 transition-all duration-300"
 							>
@@ -189,11 +192,6 @@ export default function LeaseDetailsPage() {
 									Edit Lease
 								</Link>
 							</Button>
-							<ExportButton
-								endpoint={`/leases/${params.id}/export`}
-								filename={`lease-${leaseData.id}`}
-								className="border-emerald-300 hover:bg-emerald-50"
-							/>
 						</div>
 					</div>
 				</div>

@@ -34,6 +34,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import NotificationDropdown from "@/components/notification-dropdown";
 
 interface DashboardLayoutProps {
 	children: React.ReactNode;
@@ -50,6 +51,7 @@ const navigationItems = {
 		{ name: "Properties", href: "/dashboard/admin/properties", icon: Building },
 		{ name: "Leases", href: "/dashboard/admin/leases", icon: FileText },
 		{ name: "Payments", href: "/dashboard/admin/payments", icon: CreditCard },
+		{ name: "Invoices", href: "/dashboard/admin/invoices", icon: FileText },
 		{ name: "Maintenance", href: "/dashboard/admin/maintenance", icon: Wrench },
 		{ name: "Reports", href: "/dashboard/admin/reports", icon: BarChart3 },
 		{ name: "Sales", href: "/dashboard/admin/sales", icon: TrendingUp },
@@ -65,6 +67,7 @@ const navigationItems = {
 		{ name: "Properties", href: "/dashboard/owner/properties", icon: Building },
 		{ name: "Leases", href: "/dashboard/owner/leases", icon: FileText },
 		{ name: "Payments", href: "/dashboard/owner/payments", icon: CreditCard },
+		{ name: "Invoices", href: "/dashboard/owner/invoices", icon: FileText },
 		{ name: "Reports", href: "/dashboard/owner/reports", icon: BarChart3 },
 		{
 			name: "Notifications",
@@ -74,7 +77,23 @@ const navigationItems = {
 	],
 	tenant: [
 		{ name: "Dashboard", href: "/dashboard/tenant", icon: Home },
+		{
+			name: "Browse Properties",
+			href: "/dashboard/tenant/properties",
+			icon: Building,
+		},
+		{
+			name: "My Properties",
+			href: "/dashboard/tenant/my-properties",
+			icon: Users,
+		},
+		{
+			name: "Rental Requests",
+			href: "/dashboard/tenant/rental-requests",
+			icon: FileText,
+		},
 		{ name: "Payments", href: "/dashboard/tenant/payments", icon: CreditCard },
+		{ name: "Invoices", href: "/dashboard/tenant/invoices", icon: FileText },
 		{ name: "Lease", href: "/dashboard/tenant/lease", icon: FileText },
 		{
 			name: "Maintenance",
@@ -259,13 +278,17 @@ export default function DashboardLayout({
 									</div>
 								</DropdownMenuLabel>
 								<DropdownMenuSeparator />
-								<DropdownMenuItem className="cursor-pointer">
-									<User className="mr-2 h-4 w-4" />
-									Profile
+								<DropdownMenuItem className="cursor-pointer" asChild>
+									<Link href={`/dashboard/${userRole}/profile`}>
+										<User className="mr-2 h-4 w-4" />
+										Profile
+									</Link>
 								</DropdownMenuItem>
-								<DropdownMenuItem className="cursor-pointer">
-									<Settings className="mr-2 h-4 w-4" />
-									Settings
+								<DropdownMenuItem className="cursor-pointer" asChild>
+									<Link href={`/dashboard/${userRole}/settings`}>
+										<Settings className="mr-2 h-4 w-4" />
+										Settings
+									</Link>
 								</DropdownMenuItem>
 								<DropdownMenuSeparator />
 								<DropdownMenuItem
@@ -375,17 +398,7 @@ export default function DashboardLayout({
 							</div>
 						</div>
 						<div className="flex items-center gap-x-4 lg:gap-x-6">
-							<Button
-								variant="ghost"
-								size="sm"
-								className="relative hover:bg-emerald-50"
-							>
-								<Bell className="h-6 w-6" />
-								<Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs text-white flex items-center justify-center animate-pulse">
-									3
-								</Badge>
-								<span className="sr-only">View notifications</span>
-							</Button>
+							<NotificationDropdown userRole={userRole} />
 
 							{/* Mobile Profile Dropdown */}
 							<div className="lg:hidden">

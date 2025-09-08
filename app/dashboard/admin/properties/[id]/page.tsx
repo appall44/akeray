@@ -66,6 +66,10 @@ export default function PropertyDetailsPage() {
 		totalUnits: 20,
 		occupiedUnits: 18,
 		monthlyRevenue: 450000,
+		listingType: "rent", // rent, sell, both
+		salePrice: null,
+		pricePerSqm: null,
+		minLeaseTerm: 12,
 		status: "active",
 		description:
 			"Modern apartment complex with excellent amenities and prime location.",
@@ -270,22 +274,41 @@ export default function PropertyDetailsPage() {
 										ጠቅላላ ክፍሎች / Total Units
 									</p>
 								</div>
-								<div className="text-center p-4 bg-blue-50 rounded-lg">
-									<Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-									<p className="text-2xl font-bold text-blue-600">
-										{getOccupancyRate()}%
-									</p>
-									<p className="text-sm text-gray-600">መኖሪያ / Occupancy</p>
-								</div>
-								<div className="text-center p-4 bg-purple-50 rounded-lg">
-									<DollarSign className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-									<p className="text-2xl font-bold text-purple-600">
-										{(property.monthlyRevenue / 1000).toFixed(0)}K
-									</p>
-									<p className="text-sm text-gray-600">
-										ወርሃዊ ገቢ / Monthly Revenue
-									</p>
-								</div>
+								{(property.listingType === "rent" ||
+									property.listingType === "both") && (
+									<>
+										<div className="text-center p-4 bg-blue-50 rounded-lg">
+											<Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+											<p className="text-2xl font-bold text-blue-600">
+												{getOccupancyRate()}%
+											</p>
+											<p className="text-sm text-gray-600">መኖሪያ / Occupancy</p>
+										</div>
+										<div className="text-center p-4 bg-purple-50 rounded-lg">
+											<DollarSign className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+											<p className="text-2xl font-bold text-purple-600">
+												{(property.monthlyRevenue / 1000).toFixed(0)}K
+											</p>
+											<p className="text-sm text-gray-600">
+												ወርሃዊ ገቢ / Monthly Revenue
+											</p>
+										</div>
+									</>
+								)}
+								{(property.listingType === "sell" ||
+									property.listingType === "both") && (
+									<div className="text-center p-4 bg-emerald-50 rounded-lg">
+										<DollarSign className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+										<p className="text-2xl font-bold text-emerald-600">
+											{property.salePrice
+												? (property.salePrice / 1000000).toFixed(1) + "M"
+												: "N/A"}
+										</p>
+										<p className="text-sm text-gray-600">
+											የሽያጭ ዋጋ / Sale Price
+										</p>
+									</div>
+								)}
 								<div className="text-center p-4 bg-orange-50 rounded-lg">
 									<Building className="h-8 w-8 text-orange-600 mx-auto mb-2" />
 									<p className="text-2xl font-bold text-orange-600">

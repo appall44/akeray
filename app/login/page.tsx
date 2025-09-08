@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
 	Eye,
 	EyeOff,
@@ -27,9 +26,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "@/lib/api";
-import { authManager } from "@/lib/auth";
 
 export default function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
@@ -55,66 +53,40 @@ export default function LoginPage() {
 			return;
 		}
 
-		try {
-			// Determine login endpoint based on email domain or role
-			let loginResponse;
-			
-			if (formData.email.includes('admin') || formData.email === "aseffa@akeray.et") {
-				loginResponse = await apiClient.login(formData);
-			} else if (formData.email.includes('owner') || formData.email === "mulugeta@akeray.et") {
-				loginResponse = await apiClient.loginOwner(formData);
-			} else {
-				loginResponse = await apiClient.loginTenant(formData);
-			}
-
-			if (loginResponse.error) {
-				setError(loginResponse.error);
-				setIsLoading(false);
-				return;
-			}
-
-			const { data } = loginResponse;
-			
-			// Set authentication state
-			authManager.setAuth(
-				{
-					id: data.user?.id || 1,
-					email: formData.email,
-					role: data.role,
-					name: data.user?.name || formData.email.split('@')[0],
-				},
-				data.accessToken
-			);
-
+		// Simulate API call
+		setTimeout(() => {
 			setIsLoading(false);
-			
-			// Redirect based on role
-			if (data.role === 'admin') {
+			if (
+				formData.email === "aseffa@akeray.et" &&
+				formData.password === "admin123"
+			) {
 				toast({
 					title: "Login Successful",
 					description: "Welcome to Akeray Property Management System",
 				});
 				router.push("/dashboard/admin");
-			} else if (data.role === 'owner') {
+			} else if (
+				formData.email === "mulugeta@akeray.et" &&
+				formData.password === "owner123"
+			) {
 				toast({
 					title: "Login Successful",
 					description: "Welcome to Property Owner Dashboard",
 				});
 				router.push("/dashboard/owner");
-			} else if (data.role === 'tenant') {
+			} else if (
+				formData.email === "meron@akeray.et" &&
+				formData.password === "tenant123"
+			) {
 				toast({
 					title: "Login Successful",
 					description: "Welcome to Tenant Dashboard",
 				});
 				router.push("/dashboard/tenant");
 			} else {
-				setError("Unknown user role. Please contact support.");
+				setError("Invalid email or password. Please try again.");
 			}
-		} catch (error) {
-			console.error('Login error:', error);
-			setError("Login failed. Please try again.");
-			setIsLoading(false);
-		}
+		}, 1500);
 	};
 
 	return (
