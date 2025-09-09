@@ -3,17 +3,15 @@
 import { useState } from "react";
 import {
 	FileText,
-	Plus,
 	Search,
 	Filter,
 	Eye,
-	Edit,
 	Download,
-	Send,
+	// Print,
 	Calendar,
 	Building,
 	DollarSign,
-	Settings,
+	User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,65 +48,85 @@ const invoices = [
 		id: "INV-R-001",
 		invoiceNumber: "INV-R-001",
 		type: "rental",
-		customer: "Tigist Haile",
-		property: "Bole Apartments",
+		property: "Sunrise Apartments",
 		unit: "3B",
-		amount: 25000,
-		vatAmount: 3750,
-		total: 28750,
-		date: "2024-01-01",
-		dueDate: "2024-01-31",
-		status: "sent",
-		paymentMethod: "Bank Transfer",
-		avatar:
-			"https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=100",
-	},
-	{
-		id: "INV-S-002",
-		invoiceNumber: "INV-S-002",
-		type: "sale",
-		customer: "Dawit Mekonnen",
-		property: "Kazanchis Complex",
-		unit: "2A",
-		amount: 4200000,
-		vatAmount: 630000,
-		total: 4830000,
-		date: "2024-01-05",
-		dueDate: "2024-01-12",
+		amount: 18000,
+		vatAmount: 2700,
+		total: 20700,
+		date: "2024-12-01",
+		dueDate: "2024-12-31",
 		status: "paid",
 		paymentMethod: "Bank Transfer",
-		avatar:
-			"https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100",
+		owner: {
+			businessName: "Akeray Properties",
+			name: "Mulugeta Assefa",
+			tinNumber: "0012345678",
+			phone: "+251911123456",
+			email: "mulugeta@akeray.et",
+			address: "Bole Road, Addis Ababa",
+		},
+		month: "December 2024",
 	},
 	{
-		id: "INV-R-003",
-		invoiceNumber: "INV-R-003",
+		id: "INV-R-002",
+		invoiceNumber: "INV-R-002",
 		type: "rental",
-		customer: "Hanan Ahmed",
-		property: "Piassa Plaza",
-		unit: "4A",
-		amount: 22000,
-		vatAmount: 3300,
-		total: 25300,
-		date: "2024-01-10",
-		dueDate: "2024-02-09",
-		status: "overdue",
-		paymentMethod: "Cash",
-		avatar:
-			"https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=100",
+		property: "Sunrise Apartments",
+		unit: "3B",
+		amount: 18000,
+		vatAmount: 2700,
+		total: 20700,
+		date: "2025-01-01",
+		dueDate: "2025-01-31",
+		status: "sent",
+		paymentMethod: null,
+		owner: {
+			businessName: "Akeray Properties",
+			name: "Mulugeta Assefa",
+			tinNumber: "0012345678",
+			phone: "+251911123456",
+			email: "mulugeta@akeray.et",
+			address: "Bole Road, Addis Ababa",
+		},
+		month: "January 2025",
+	},
+	{
+		id: "INV-S-003",
+		invoiceNumber: "INV-S-003",
+		type: "sale",
+		property: "Green Valley Villa",
+		unit: null,
+		amount: 3500000,
+		vatAmount: 525000,
+		total: 4025000,
+		date: "2024-12-15",
+		dueDate: "2024-12-22",
+		status: "paid",
+		paymentMethod: "Bank Transfer",
+		owner: {
+			businessName: "Green Valley Properties",
+			name: "Sarah Johnson",
+			tinNumber: "0087654321",
+			phone: "+251922345678",
+			email: "sarah@email.com",
+			address: "Kazanchis, Addis Ababa",
+		},
+		month: null,
 	},
 ];
 
-export default function OwnerInvoicesPage() {
+export default function TenantInvoicesPage() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterType, setFilterType] = useState("all");
 	const [filterStatus, setFilterStatus] = useState("all");
 
 	const filteredInvoices = invoices.filter((invoice) => {
 		const matchesSearch =
-			invoice.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			invoice.property.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+			invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			invoice.owner.businessName
+				.toLowerCase()
+				.includes(searchTerm.toLowerCase());
 		const matchesType = filterType === "all" || invoice.type === filterType;
 		const matchesStatus =
 			filterStatus === "all" || invoice.status === filterStatus;
@@ -161,9 +179,167 @@ export default function OwnerInvoicesPage() {
 			case "rental":
 				return "Rental";
 			case "sale":
-				return "Sale";
+				return "Purchase";
 			default:
 				return type;
+		}
+	};
+
+	const handleDownloadPDF = (invoice: any) => {
+		const pdfContent = `
+INVOICE
+
+Invoice Number: ${invoice.invoiceNumber}
+Date: ${new Date(invoice.date).toLocaleDateString()}
+Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}
+
+From:
+${invoice.owner.businessName}
+${invoice.owner.name}
+TIN: ${invoice.owner.tinNumber}
+Address: ${invoice.owner.address}
+Phone: ${invoice.owner.phone}
+Email: ${invoice.owner.email}
+
+To:
+Meron Tadesse
+Tenant
+Phone: +251911234567
+Email: meron@email.com
+
+Property Details:
+${invoice.property}${invoice.unit ? ` - Unit ${invoice.unit}` : ""}
+${invoice.month ? `For: ${invoice.month}` : ""}
+
+Invoice Items:
+${
+	invoice.type === "rental" ? "Monthly Rent" : "Property Purchase"
+}: ${invoice.amount.toLocaleString()} ETB
+VAT (15%): ${invoice.vatAmount.toLocaleString()} ETB
+Total: ${invoice.total.toLocaleString()} ETB
+
+Payment Instructions:
+- Bank Transfer to account provided by property owner
+- Mobile Money to ${invoice.owner.phone}
+- Reference: ${invoice.invoiceNumber}
+
+Generated on: ${new Date().toLocaleDateString()}
+		`.trim();
+
+		const blob = new Blob([pdfContent], { type: "text/plain" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `invoice-${invoice.invoiceNumber}.pdf`;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	};
+
+	const handlePrint = (invoice: any) => {
+		const printContent = `
+			<html>
+				<head>
+					<title>Invoice ${invoice.invoiceNumber}</title>
+					<style>
+						body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+						.header { background: linear-gradient(135deg, #059669, #3B82F6); color: white; padding: 20px; margin: -20px -20px 20px -20px; text-align: center; }
+						.invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+						.invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+						.invoice-table th, .invoice-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+						.invoice-table th { background: #f8f9fa; font-weight: bold; }
+						.total-row { background: #f0f9ff; font-weight: bold; }
+						.footer { margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+						.amount { color: #059669; font-weight: bold; }
+					</style>
+				</head>
+				<body>
+					<div class="header">
+						<h1>AKERAY PROPERTY MANAGEMENT SYSTEM</h1>
+						<h2>OFFICIAL INVOICE</h2>
+					</div>
+					
+					<div class="invoice-details">
+						<div>
+							<h3>From:</h3>
+							<p><strong>${invoice.owner.businessName}</strong></p>
+							<p>${invoice.owner.name}</p>
+							<p>TIN: ${invoice.owner.tinNumber}</p>
+							<p>Address: ${invoice.owner.address}</p>
+							<p>Phone: ${invoice.owner.phone}</p>
+							<p>Email: ${invoice.owner.email}</p>
+						</div>
+						<div>
+							<h3>Invoice Details:</h3>
+							<p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
+							<p><strong>Date:</strong> ${new Date(invoice.date).toLocaleDateString()}</p>
+							<p><strong>Due Date:</strong> ${new Date(
+								invoice.dueDate
+							).toLocaleDateString()}</p>
+							<p><strong>Status:</strong> ${getStatusLabel(invoice.status)}</p>
+							<p><strong>Type:</strong> ${getTypeLabel(invoice.type)}</p>
+						</div>
+					</div>
+					
+					<div>
+						<h3>To:</h3>
+						<p><strong>Meron Tadesse</strong></p>
+						<p>Tenant</p>
+						<p>Phone: +251911234567</p>
+						<p>Email: meron@email.com</p>
+					</div>
+					
+					<div style="margin: 20px 0;">
+						<h3>Property Information:</h3>
+						<p><strong>Property:</strong> ${invoice.property}${
+			invoice.unit ? ` - Unit ${invoice.unit}` : ""
+		}</p>
+						${invoice.month ? `<p><strong>Period:</strong> ${invoice.month}</p>` : ""}
+					</div>
+					
+					<table class="invoice-table">
+						<thead>
+							<tr>
+								<th>Description</th>
+								<th style="text-align: right;">Amount (ETB)</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>${invoice.type === "rental" ? "Monthly Rent" : "Property Purchase"}</td>
+								<td style="text-align: right;">${invoice.amount.toLocaleString()}</td>
+							</tr>
+							<tr>
+								<td>VAT (15%)</td>
+								<td style="text-align: right;">${invoice.vatAmount.toLocaleString()}</td>
+							</tr>
+							<tr class="total-row">
+								<td><strong>TOTAL AMOUNT</strong></td>
+								<td style="text-align: right;" class="amount"><strong>${invoice.total.toLocaleString()}</strong></td>
+							</tr>
+						</tbody>
+					</table>
+					
+					<div class="footer">
+						<h4>Payment Instructions:</h4>
+						<p>• Bank Transfer or Mobile Money to property owner</p>
+						<p>• Reference: ${invoice.invoiceNumber}</p>
+						<p>• Contact: ${invoice.owner.phone} for payment queries</p>
+						<p style="margin-top: 20px; font-size: 12px; color: #666;">
+							Generated on: ${new Date().toLocaleDateString()} | 
+							Akeray Property Management System
+						</p>
+					</div>
+				</body>
+			</html>
+		`;
+
+		const printWindow = window.open("", "_blank");
+		if (printWindow) {
+			printWindow.document.write(printContent);
+			printWindow.document.close();
+			printWindow.print();
 		}
 	};
 
@@ -181,9 +357,9 @@ export default function OwnerInvoicesPage() {
 
 	return (
 		<DashboardLayout
-			userRole="owner"
-			userName="Mulugeta Assefa"
-			userEmail="mulugeta@akeray.et"
+			userRole="tenant"
+			userName="Meron Tadesse"
+			userEmail="meron@email.com"
 		>
 			<div className="space-y-8">
 				{/* Header */}
@@ -194,32 +370,11 @@ export default function OwnerInvoicesPage() {
 								My Invoices
 							</h1>
 							<p className="text-lg text-gray-600">
-								Manage invoices for your rental and sale transactions
+								View and download all your rental and purchase invoices
 							</p>
 							<p className="text-sm text-gray-500">
-								Track billing, payments, and generate professional invoices
+								Access official invoices for tax records and payment tracking
 							</p>
-						</div>
-						<div className="flex space-x-3">
-							<Button
-								variant="outline"
-								asChild
-								className="border-emerald-300 hover:bg-emerald-50 bg-transparent"
-							>
-								<Link href="/dashboard/owner/business-setup">
-									<Settings className="h-4 w-4 mr-2" />
-									Business Setup
-								</Link>
-							</Button>
-							<Button
-								asChild
-								className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 shadow-lg transform hover:scale-105 transition-all duration-300"
-							>
-								<Link href="/dashboard/owner/invoices/new">
-									<Plus className="h-4 w-4 mr-2" />
-									Create Invoice
-								</Link>
-							</Button>
 						</div>
 					</div>
 				</div>
@@ -325,7 +480,7 @@ export default function OwnerInvoicesPage() {
 						<div className="relative flex-1">
 							<Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
 							<Input
-								placeholder="Search by customer, property, or invoice number..."
+								placeholder="Search by property, invoice number, or business name..."
 								className="pl-10"
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
@@ -353,7 +508,7 @@ export default function OwnerInvoicesPage() {
 										Rental
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => setFilterType("sale")}>
-										Sale
+										Purchase
 									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
@@ -405,7 +560,7 @@ export default function OwnerInvoicesPage() {
 						<CardHeader>
 							<CardTitle className="text-xl">Invoice Records</CardTitle>
 							<CardDescription>
-								All invoices generated for your properties
+								All your rental and purchase invoices with download options
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
@@ -413,7 +568,6 @@ export default function OwnerInvoicesPage() {
 								<TableHeader>
 									<TableRow>
 										<TableHead>Invoice Number</TableHead>
-										<TableHead>Customer</TableHead>
 										<TableHead>Property & Unit</TableHead>
 										<TableHead>Type</TableHead>
 										<TableHead>Amount</TableHead>
@@ -432,29 +586,20 @@ export default function OwnerInvoicesPage() {
 												</span>
 											</TableCell>
 											<TableCell>
-												<div className="flex items-center space-x-3">
-													<Avatar className="h-8 w-8">
-														<AvatarImage src={invoice.avatar} />
-														<AvatarFallback>
-															{invoice.customer
-																.split(" ")
-																.map((n) => n[0])
-																.join("")}
-														</AvatarFallback>
-													</Avatar>
-													<span className="font-medium">
-														{invoice.customer}
-													</span>
-												</div>
-											</TableCell>
-											<TableCell>
 												<div>
 													<p className="font-medium text-sm">
 														{invoice.property}
 													</p>
-													<p className="text-xs text-gray-500">
-														Unit {invoice.unit}
-													</p>
+													{invoice.unit && (
+														<p className="text-xs text-gray-500">
+															Unit {invoice.unit}
+														</p>
+													)}
+													{invoice.month && (
+														<p className="text-xs text-blue-600">
+															{invoice.month}
+														</p>
+													)}
 												</div>
 											</TableCell>
 											<TableCell>
@@ -494,23 +639,25 @@ export default function OwnerInvoicesPage() {
 												<div className="flex items-center justify-end space-x-2">
 													<Button variant="ghost" size="sm" asChild>
 														<Link
-															href={`/dashboard/owner/invoices/${invoice.id}`}
+															href={`/dashboard/tenant/invoices/${invoice.id}`}
 														>
 															<Eye className="h-4 w-4" />
 														</Link>
 													</Button>
-													<Button variant="ghost" size="sm">
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => handleDownloadPDF(invoice)}
+													>
 														<Download className="h-4 w-4" />
 													</Button>
-													{invoice.status === "generated" && (
-														<Button
-															variant="ghost"
-															size="sm"
-															className="text-blue-600"
-														>
-															<Send className="h-4 w-4" />
-														</Button>
-													)}
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => handlePrint(invoice)}
+													>
+														{/* <Print className="h-4 w-4" /> */}
+													</Button>
 												</div>
 											</TableCell>
 										</TableRow>

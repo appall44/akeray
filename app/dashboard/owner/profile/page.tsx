@@ -29,6 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import DashboardLayout from "@/components/dashboard-layout";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 export default function OwnerProfilePage() {
 	const [isLoading, setIsLoading] = useState(false);
@@ -372,6 +373,59 @@ export default function OwnerProfilePage() {
 								</CardHeader>
 								<CardContent className="space-y-4">
 									<div className="space-y-2">
+										<Label htmlFor="businessName">Business Name</Label>
+										<Input
+											id="businessName"
+											value={formData.businessName || "Akeray Properties"}
+											onChange={(e) =>
+												handleInputChange("businessName", e.target.value)
+											}
+											disabled={!isEditing}
+											className={
+												isEditing
+													? "border-emerald-300 focus:border-emerald-500"
+													: "bg-gray-50"
+											}
+										/>
+									</div>
+
+									<div className="grid grid-cols-2 gap-4">
+										<div className="space-y-2">
+											<Label htmlFor="tinNumber">TIN Number</Label>
+											<Input
+												id="tinNumber"
+												value={formData.tinNumber || "0012345678"}
+												onChange={(e) =>
+													handleInputChange("tinNumber", e.target.value)
+												}
+												disabled={!isEditing}
+												className={
+													isEditing
+														? "border-emerald-300 focus:border-emerald-500"
+														: "bg-gray-50"
+												}
+												maxLength={10}
+											/>
+										</div>
+										<div className="space-y-2">
+											<Label htmlFor="vatNumber">VAT Number</Label>
+											<Input
+												id="vatNumber"
+												value={formData.vatNumber || "VAT-123456789"}
+												onChange={(e) =>
+													handleInputChange("vatNumber", e.target.value)
+												}
+												disabled={!isEditing}
+												className={
+													isEditing
+														? "border-emerald-300 focus:border-emerald-500"
+														: "bg-gray-50"
+												}
+											/>
+										</div>
+									</div>
+
+									<div className="space-y-2">
 										<Label htmlFor="company">Company Name</Label>
 										<Input
 											id="company"
@@ -494,6 +548,39 @@ export default function OwnerProfilePage() {
 							</Card>
 						</div>
 					</div>
+
+					{/* Business Setup Link */}
+					{isEditing && (
+						<div
+							className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1400"
+							style={{ animationFillMode: "forwards" }}
+						>
+							<Card className="shadow-xl border-0 bg-gradient-to-r from-yellow-50 to-orange-50 backdrop-blur-sm">
+								<CardContent className="p-6">
+									<div className="flex items-center justify-between">
+										<div>
+											<h3 className="font-semibold text-orange-800 mb-2">
+												Complete Business Setup
+											</h3>
+											<p className="text-orange-700 text-sm">
+												Set up your complete business details for invoice
+												generation
+											</p>
+										</div>
+										<Button
+											asChild
+											variant="outline"
+											className="border-orange-300 hover:bg-orange-50"
+										>
+											<Link href="/dashboard/owner/business-setup">
+												Setup Business Details
+											</Link>
+										</Button>
+									</div>
+								</CardContent>
+							</Card>
+						</div>
+					)}
 
 					{/* Save Button */}
 					{isEditing && (

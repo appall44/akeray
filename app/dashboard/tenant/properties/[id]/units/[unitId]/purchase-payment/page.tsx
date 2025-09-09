@@ -136,6 +136,14 @@ export default function PurchasePaymentPage() {
 				title: "Purchase Payment Submitted Successfully!",
 				description: `Your payment of ${totalAmount.toLocaleString()} ETB has been submitted for verification. You'll receive confirmation shortly.`,
 			});
+
+			// Auto-generate invoice after payment confirmation
+			toast({
+				title: "Purchase Invoice Generated!",
+				description:
+					"Your official purchase invoice has been generated and is available in the Invoices section.",
+			});
+
 			router.push(`/dashboard/tenant/purchase-requests`);
 		}, 2000);
 	};

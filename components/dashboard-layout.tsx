@@ -68,6 +68,11 @@ const navigationItems = {
 		{ name: "Leases", href: "/dashboard/owner/leases", icon: FileText },
 		{ name: "Payments", href: "/dashboard/owner/payments", icon: CreditCard },
 		{ name: "Invoices", href: "/dashboard/owner/invoices", icon: FileText },
+		{
+			name: "Business Setup",
+			href: "/dashboard/owner/business-setup",
+			icon: Settings,
+		},
 		{ name: "Reports", href: "/dashboard/owner/reports", icon: BarChart3 },
 		{
 			name: "Notifications",

@@ -103,6 +103,15 @@ export default function LeasePaymentPage() {
 				title: "Payment Submitted Successfully!",
 				description: `Your payment of ${totalAmount.toLocaleString()} ETB has been submitted for verification. You'll receive confirmation shortly.`,
 			});
+
+			// Auto-generate invoice after payment confirmation
+			// In real implementation, this would be handled by the backend
+			toast({
+				title: "Invoice Generated!",
+				description:
+					"Your official invoice has been generated and is available in the Invoices section.",
+			});
+
 			router.push(`/dashboard/tenant/lease`);
 		}, 2000);
 	};
