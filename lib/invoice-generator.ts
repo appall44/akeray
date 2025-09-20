@@ -1,380 +1,386 @@
 import { jsPDF } from "jspdf";
 
 export interface InvoiceData {
-  id: string;
+  // Invoice Details
   invoiceNumber: string;
-  date: string;
+  invoiceDate: string;
   dueDate: string;
-  type: "rental" | "sale";
+  type: "rental" | "sale" | "deposit" | "utilities" | "maintenance" | "other";
   status: "generated" | "sent" | "paid" | "overdue";
 
-  // Property Information
-  property: {
+  // Business Information (Owner)
+  business: {
     name: string;
-    address: string;
-    unit?: string;
-  };
-
-  // Owner/Business Information
-  owner: {
-    businessName: string;
-    fullName: string;
+    ownerName: string;
     tinNumber: string;
     address: string;
     phone: string;
     email: string;
-    website?: string;
+    bankAccount?: string;
+    bankName?: string;
   };
 
-  // Customer Information
+  // Customer Information (Tenant/Buyer)
   customer: {
     name: string;
-    address: string;
     phone: string;
     email?: string;
-    tinNumber?: string;
+    address?: string;
   };
 
-  // Invoice Items
-  items: Array<{
-    description: string;
-    quantity: number;
-    unitPrice: number;
-    total: number;
-  }>;
+  // Property Information
+  property: {
+    name: string;
+    unit?: string;
+    address: string;
+  };
 
   // Financial Details
-  subtotal: number;
-  vatRate: number;
-  vatAmount: number;
-  total: number;
+  financial: {
+    baseAmount: number;
+    vatAmount: number;
+    totalAmount: number;
+    currency: string;
+    month?: string; // For rental invoices
+  };
 
-  // Payment Information
-  paymentMethod?: string;
-  paymentTerms: string;
+  // Terms and Instructions
+  terms?: string;
+  paymentInstructions?: string[];
   notes?: string;
 }
 
 export const generateInvoicePDF = (invoice: InvoiceData): void => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  // Colors
-  const primaryColor = [74, 144, 226]; // Blue
-  const secondaryColor = [16, 185, 129]; // Emerald
-  const textColor = [51, 51, 51]; // Dark gray
-
-  // Header Section
   let yPosition = 20;
 
-  // Company Logo/Header
-  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-
-  // Company Name
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
+  // Header with business info
+  doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  doc.text("AKERAY PROPERTIES", 20, 25);
-
-  // Invoice Title
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
-  doc.text(`${invoice.type.toUpperCase()} INVOICE`, pageWidth - 20, 25, { align: "right" });
-
-  yPosition = 50;
-
-  // Business Information
-  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text(invoice.owner.businessName, 20, yPosition);
-
-  yPosition += 6;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`TIN: ${invoice.owner.tinNumber}`, 20, yPosition);
-
-  yPosition += 5;
-  doc.text(`Tel: ${invoice.owner.phone}`, 20, yPosition);
-
-  yPosition += 5;
-  doc.text(invoice.owner.address, 20, yPosition);
-
-  if (invoice.owner.email) {
-    yPosition += 5;
-    doc.text(`Email: ${invoice.owner.email}`, 20, yPosition);
-  }
-
-  // Invoice Details (Right side)
-  let rightYPosition = 50;
-  doc.setFontSize(10);
-
-  // Invoice Info Box
-  doc.setDrawColor(200, 200, 200);
-  doc.rect(pageWidth - 80, rightYPosition, 60, 40);
-
-  doc.text("Date:", pageWidth - 75, rightYPosition + 8);
-  doc.text(new Date(invoice.date).toLocaleDateString(), pageWidth - 45, rightYPosition + 8);
-
-  doc.text("Invoice #:", pageWidth - 75, rightYPosition + 16);
-  doc.text(invoice.invoiceNumber, pageWidth - 45, rightYPosition + 16);
-
-  doc.text("Due Date:", pageWidth - 75, rightYPosition + 24);
-  doc.text(new Date(invoice.dueDate).toLocaleDateString(), pageWidth - 45, rightYPosition + 24);
-
-  doc.text("Status:", pageWidth - 75, rightYPosition + 32);
-  doc.text(invoice.status.toUpperCase(), pageWidth - 45, rightYPosition + 32);
-
-  yPosition = 100;
-
-  // Customer Information
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("BILL TO:", 20, yPosition);
-
-  yPosition += 8;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(invoice.customer.name, 20, yPosition);
-
-  if (invoice.customer.tinNumber) {
-    yPosition += 5;
-    doc.text(`TIN: ${invoice.customer.tinNumber}`, 20, yPosition);
-  }
-
-  yPosition += 5;
-  doc.text(invoice.customer.address, 20, yPosition);
-
-  yPosition += 5;
-  doc.text(`Phone: ${invoice.customer.phone}`, 20, yPosition);
-
-  if (invoice.customer.email) {
-    yPosition += 5;
-    doc.text(`Email: ${invoice.customer.email}`, 20, yPosition);
-  }
-
-  yPosition = 140;
-
-  // Property Information
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("PROPERTY DETAILS:", 20, yPosition);
-
-  yPosition += 8;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Property: ${invoice.property.name}`, 20, yPosition);
-
-  if (invoice.property.unit) {
-    yPosition += 5;
-    doc.text(`Unit: ${invoice.property.unit}`, 20, yPosition);
-  }
-
-  yPosition += 5;
-  doc.text(`Address: ${invoice.property.address}`, 20, yPosition);
-
-  yPosition = 170;
-
-  // Invoice Items Table
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("INVOICE DETAILS:", 20, yPosition);
-
-  yPosition += 10;
-
-  // Table Header
-  doc.setFillColor(240, 240, 240);
-  doc.rect(20, yPosition, pageWidth - 40, 12, 'F');
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.text("Description", 25, yPosition + 8);
-  doc.text("Qty", pageWidth - 80, yPosition + 8);
-  doc.text("Unit Price", pageWidth - 60, yPosition + 8);
-  doc.text("Total", pageWidth - 30, yPosition + 8);
-
-  yPosition += 12;
-
-  // Table Rows
-  doc.setFont("helvetica", "normal");
-  invoice.items.forEach((item) => {
-    yPosition += 8;
-    doc.text(item.description, 25, yPosition);
-    doc.text(item.quantity.toString(), pageWidth - 80, yPosition);
-    doc.text(`${item.unitPrice.toLocaleString()} ETB`, pageWidth - 60, yPosition);
-    doc.text(`${item.total.toLocaleString()} ETB`, pageWidth - 30, yPosition);
-  });
-
+  doc.text("INVOICE", pageWidth / 2, yPosition, { align: "center" });
   yPosition += 15;
 
-  // Totals Section
-  const totalsX = pageWidth - 80;
+  doc.setFontSize(16);
+  doc.text(invoice.business.name, pageWidth / 2, yPosition, { align: "center" });
+  yPosition += 10;
 
-  // Subtotal
-  doc.text("Subtotal:", totalsX, yPosition);
-  doc.text(`${invoice.subtotal.toLocaleString()} ETB`, pageWidth - 30, yPosition);
+  doc.setFontSize(10);
+  doc.text(`TIN: ${invoice.business.tinNumber}`, pageWidth / 2, yPosition, { align: "center" });
+  yPosition += 20;
 
-  yPosition += 8;
-
-  // VAT
-  if (invoice.vatAmount > 0) {
-    doc.text(`VAT (${invoice.vatRate}%):`, totalsX, yPosition);
-    doc.text(`${invoice.vatAmount.toLocaleString()} ETB`, pageWidth - 30, yPosition);
-    yPosition += 8;
-  }
-
-  // Total
-  doc.setFont("helvetica", "bold");
+  // Invoice details
   doc.setFontSize(12);
-  doc.text("TOTAL:", totalsX, yPosition);
-  doc.text(`${invoice.total.toLocaleString()} ETB`, pageWidth - 30, yPosition);
+  doc.setFont("helvetica", "normal");
+
+  // Left column - Business details
+  doc.text("From:", 20, yPosition);
+  yPosition += 8;
+  doc.text(invoice.business.name, 20, yPosition);
+  yPosition += 6;
+  doc.text(invoice.business.ownerName, 20, yPosition);
+  yPosition += 6;
+  doc.text(`TIN: ${invoice.business.tinNumber}`, 20, yPosition);
+  yPosition += 6;
+  doc.text(invoice.business.address, 20, yPosition);
+  yPosition += 6;
+  doc.text(invoice.business.phone, 20, yPosition);
+  yPosition += 6;
+  doc.text(invoice.business.email, 20, yPosition);
+
+  // Right column - Invoice details
+  let rightYPosition = yPosition - 42;
+  doc.text("Invoice Details:", pageWidth - 80, rightYPosition);
+  rightYPosition += 8;
+  doc.text(`Invoice #: ${invoice.invoiceNumber}`, pageWidth - 80, rightYPosition);
+  rightYPosition += 6;
+  doc.text(`Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`, pageWidth - 80, rightYPosition);
+  rightYPosition += 6;
+  doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, pageWidth - 80, rightYPosition);
+  rightYPosition += 6;
+  doc.text(`Type: ${invoice.type.charAt(0).toUpperCase() + invoice.type.slice(1)}`, pageWidth - 80, rightYPosition);
+  rightYPosition += 6;
+  doc.text(`Status: ${invoice.status.toUpperCase()}`, pageWidth - 80, rightYPosition);
 
   yPosition += 20;
 
-  // Payment Information
-  if (invoice.paymentMethod) {
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Payment Method: ${invoice.paymentMethod}`, 20, yPosition);
+  // Customer details
+  doc.text("To:", 20, yPosition);
+  yPosition += 8;
+  doc.text(invoice.customer.name, 20, yPosition);
+  yPosition += 6;
+  doc.text("Tenant/Customer", 20, yPosition);
+  yPosition += 6;
+  doc.text(invoice.customer.phone, 20, yPosition);
+  if (invoice.customer.email) {
     yPosition += 6;
+    doc.text(invoice.customer.email, 20, yPosition);
+  }
+  if (invoice.customer.address) {
+    yPosition += 6;
+    doc.text(invoice.customer.address, 20, yPosition);
   }
 
-  doc.text(`Payment Terms: ${invoice.paymentTerms}`, 20, yPosition);
+  yPosition += 20;
 
-  if (invoice.notes) {
-    yPosition += 10;
-    doc.text("Notes:", 20, yPosition);
+  // Property details
+  doc.text("Property Information:", 20, yPosition);
+  yPosition += 8;
+  doc.text(`Property: ${invoice.property.name}${invoice.property.unit ? ` - Unit ${invoice.property.unit}` : ""}`, 20, yPosition);
+  yPosition += 6;
+  doc.text(`Address: ${invoice.property.address}`, 20, yPosition);
+  if (invoice.financial.month) {
     yPosition += 6;
-    doc.text(invoice.notes, 20, yPosition);
+    doc.text(`Billing Period: ${invoice.financial.month}`, 20, yPosition);
+  }
+
+  yPosition += 20;
+
+  // Invoice items table
+  doc.setFont("helvetica", "bold");
+  doc.text("Description", 20, yPosition);
+  doc.text("Amount", pageWidth - 60, yPosition, { align: "right" });
+  yPosition += 8;
+
+  // Draw line
+  doc.line(20, yPosition, pageWidth - 20, yPosition);
+  yPosition += 10;
+
+  doc.setFont("helvetica", "normal");
+  doc.text(invoice.type === "rental" ? "Monthly Rent" : "Property Purchase", 20, yPosition);
+  doc.text(`${invoice.financial.baseAmount.toLocaleString()} ${invoice.financial.currency}`, pageWidth - 60, yPosition, { align: "right" });
+  yPosition += 8;
+
+  if (invoice.financial.vatAmount > 0) {
+    doc.text("VAT (15%)", 20, yPosition);
+    doc.text(`${invoice.financial.vatAmount.toLocaleString()} ${invoice.financial.currency}`, pageWidth - 60, yPosition, { align: "right" });
+    yPosition += 8;
+  }
+
+  // Total line
+  doc.line(20, yPosition, pageWidth - 20, yPosition);
+  yPosition += 10;
+
+  doc.setFont("helvetica", "bold");
+  doc.text("TOTAL AMOUNT", 20, yPosition);
+  doc.text(`${invoice.financial.totalAmount.toLocaleString()} ${invoice.financial.currency}`, pageWidth - 60, yPosition, { align: "right" });
+
+  yPosition += 20;
+
+  // Payment instructions
+  if (invoice.paymentInstructions && invoice.paymentInstructions.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.text("Payment Instructions:", 20, yPosition);
+    yPosition += 8;
+    doc.setFont("helvetica", "normal");
+    invoice.paymentInstructions.forEach((instruction) => {
+      doc.text(`• ${instruction}`, 20, yPosition);
+      yPosition += 6;
+    });
+    yPosition += 10;
+  }
+
+  // Terms
+  if (invoice.terms) {
+    doc.setFont("helvetica", "bold");
+    doc.text("Terms & Conditions:", 20, yPosition);
+    yPosition += 8;
+    doc.setFont("helvetica", "normal");
+    const splitTerms = doc.splitTextToSize(invoice.terms, pageWidth - 40);
+    doc.text(splitTerms, 20, yPosition);
+    yPosition += splitTerms.length * 6;
   }
 
   // Footer
-  yPosition = pageHeight - 30;
+  yPosition += 20;
   doc.setFontSize(8);
-  doc.setTextColor(128, 128, 128);
-  doc.text("This is a computer generated invoice, no signature required.", pageWidth / 2, yPosition, { align: "center" });
-
-  yPosition += 5;
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth / 2, yPosition, { align: "center" });
+  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, yPosition);
+  doc.text("Akeray Property Management System", pageWidth / 2, yPosition, { align: "center" });
 
   // Save the PDF
   doc.save(`invoice-${invoice.invoiceNumber}.pdf`);
 };
 
-export const generateRentalInvoice = (leaseData: any, ownerData: any, paymentData: any): InvoiceData => {
-  const invoiceNumber = `INV-R-${Date.now()}`;
-  const subtotal = paymentData.amount;
-  const vatRate = 15; // 15% VAT
-  const vatAmount = Math.round(subtotal * (vatRate / 100));
-  const total = subtotal + vatAmount;
+export const printInvoice = (invoice: InvoiceData): void => {
+  const printContent = `
+		<html>
+			<head>
+				<title>Invoice ${invoice.invoiceNumber}</title>
+				<style>
+					body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+					.header { background: linear-gradient(135deg, #059669, #3B82F6); color: white; padding: 30px; margin: -20px -20px 30px -20px; text-align: center; }
+					.invoice-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; }
+					.invoice-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+					.invoice-table th, .invoice-table td { border: 1px solid #ddd; padding: 15px; }
+					.invoice-table th { background: #f8f9fa; font-weight: bold; }
+					.total-row { background: #f0f9ff; font-weight: bold; font-size: 18px; }
+					.footer { margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+					.amount { color: #059669; }
+					.status-paid { color: #059669; font-weight: bold; }
+					.logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+				</style>
+			</head>
+			<body>
+				<div class="header">
+					<div class="logo">AKERAY PROPERTY MANAGEMENT SYSTEM</div>
+					<h1>OFFICIAL INVOICE</h1>
+					<p>Professional Property Management Services</p>
+				</div>
+				
+				<div class="invoice-info">
+					<div>
+						<h3>From:</h3>
+						<p><strong>${invoice.business.name}</strong></p>
+						<p>${invoice.business.ownerName}</p>
+						<p>TIN: ${invoice.business.tinNumber}</p>
+						<p>Address: ${invoice.business.address}</p>
+						<p>Phone: ${invoice.business.phone}</p>
+						<p>Email: ${invoice.business.email}</p>
+					</div>
+					<div>
+						<h3>Invoice Information:</h3>
+						<p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
+						<p><strong>Date:</strong> ${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+						<p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+						<p><strong>Type:</strong> ${invoice.type.charAt(0).toUpperCase() + invoice.type.slice(1)}</p>
+						<p><strong>Status:</strong> <span class="status-paid">${invoice.status.toUpperCase()}</span></p>
+					</div>
+				</div>
+				
+				<div>
+					<h3>To:</h3>
+					<p><strong>${invoice.customer.name}</strong></p>
+					<p>Tenant/Customer</p>
+					<p>Phone: ${invoice.customer.phone}</p>
+					${invoice.customer.email ? `<p>Email: ${invoice.customer.email}</p>` : ""}
+					${invoice.customer.address ? `<p>Address: ${invoice.customer.address}</p>` : ""}
+				</div>
+				
+				<div style="margin: 30px 0;">
+					<h3>Property Information:</h3>
+					<p><strong>Property:</strong> ${invoice.property.name}${invoice.property.unit ? ` - Unit ${invoice.property.unit}` : ""}</p>
+					<p><strong>Address:</strong> ${invoice.property.address}</p>
+					${invoice.financial.month ? `<p><strong>Billing Period:</strong> ${invoice.financial.month}</p>` : ""}
+				</div>
+				
+				<table class="invoice-table">
+					<thead>
+						<tr>
+							<th>Description</th>
+							<th style="text-align: center;">Quantity</th>
+							<th style="text-align: right;">Unit Price (${invoice.financial.currency})</th>
+							<th style="text-align: right;">Amount (${invoice.financial.currency})</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>${invoice.type === "rental" ? "Monthly Rent" : "Property Purchase"}</td>
+							<td style="text-align: center;">1</td>
+							<td style="text-align: right;">${invoice.financial.baseAmount.toLocaleString()}</td>
+							<td style="text-align: right;">${invoice.financial.baseAmount.toLocaleString()}</td>
+						</tr>
+						${invoice.financial.vatAmount > 0 ? `
+						<tr>
+							<td>VAT (15%)</td>
+							<td style="text-align: center;">-</td>
+							<td style="text-align: right;">-</td>
+							<td style="text-align: right;">${invoice.financial.vatAmount.toLocaleString()}</td>
+						</tr>
+						` : ""}
+						<tr class="total-row">
+							<td colspan="3"><strong>TOTAL AMOUNT</strong></td>
+							<td style="text-align: right;" class="amount"><strong>${invoice.financial.totalAmount.toLocaleString()}</strong></td>
+						</tr>
+					</tbody>
+				</table>
+				
+				${invoice.paymentInstructions ? `
+				<div class="footer">
+					<h4>Payment Instructions:</h4>
+					${invoice.paymentInstructions.map(instruction => `<p>• ${instruction}</p>`).join("")}
+				</div>
+				` : ""}
+				
+				${invoice.terms ? `
+				<div style="margin-top: 20px;">
+					<h4>Terms & Conditions:</h4>
+					<p>${invoice.terms}</p>
+				</div>
+				` : ""}
+				
+				<div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+					<p>Generated on: ${new Date().toLocaleDateString()}</p>
+					<p>Akeray Property Management System | Professional Property Services</p>
+					<p>For support: support@akeray.et | +251-911-654321</p>
+				</div>
+			</body>
+		</html>
+	`;
 
-  return {
-    id: `invoice-${invoiceNumber}`,
-    invoiceNumber,
-    date: new Date().toISOString(),
-    dueDate: paymentData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    type: "rental",
-    status: "generated",
-
-    property: {
-      name: leaseData.property.name,
-      address: leaseData.property.address,
-      unit: leaseData.unit?.name,
-    },
-
-    owner: {
-      businessName: ownerData.businessName || ownerData.company || "Akeray Properties",
-      fullName: ownerData.name || ownerData.fullName,
-      tinNumber: ownerData.tinNumber || "0000000000",
-      address: ownerData.address,
-      phone: ownerData.phone,
-      email: ownerData.email,
-      website: ownerData.website,
-    },
-
-    customer: {
-      name: leaseData.tenant.name,
-      address: leaseData.tenant.address || "Addis Ababa, Ethiopia",
-      phone: leaseData.tenant.phone,
-      email: leaseData.tenant.email,
-    },
-
-    items: [
-      {
-        description: `Monthly Rent - ${leaseData.property.name}${leaseData.unit ? ` - ${leaseData.unit.name}` : ""}`,
-        quantity: 1,
-        unitPrice: subtotal,
-        total: subtotal,
-      },
-    ],
-
-    subtotal,
-    vatRate,
-    vatAmount,
-    total,
-
-    paymentMethod: paymentData.method,
-    paymentTerms: "Payment due within 30 days",
-    notes: paymentData.notes,
-  };
+  const printWindow = window.open("", "_blank");
+  if (printWindow) {
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+  }
 };
 
-export const generateSaleInvoice = (saleData: any, ownerData: any, paymentData: any): InvoiceData => {
-  const invoiceNumber = `INV-S-${Date.now()}`;
-  const subtotal = saleData.salePrice;
-  const vatRate = 15; // 15% VAT
-  const vatAmount = Math.round(subtotal * (vatRate / 100));
-  const total = subtotal + vatAmount;
-
+// Helper function to create invoice data from existing data
+export const createInvoiceFromData = (data: {
+  invoiceNumber: string;
+  type: "rental" | "sale";
+  customer: { name: string; phone: string; email?: string; address?: string };
+  property: { name: string; unit?: string; address: string };
+  amount: number;
+  vatAmount: number;
+  total: number;
+  date: string;
+  dueDate: string;
+  status: "generated" | "sent" | "paid" | "overdue";
+  month?: string;
+  owner: {
+    businessName: string;
+    name: string;
+    tinNumber: string;
+    address: string;
+    phone: string;
+    email: string;
+    bankAccount?: string;
+    bankName?: string;
+  };
+}): InvoiceData => {
   return {
-    id: `invoice-${invoiceNumber}`,
-    invoiceNumber,
-    date: new Date().toISOString(),
-    dueDate: paymentData.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    type: "sale",
-    status: "generated",
-
-    property: {
-      name: saleData.property.name,
-      address: saleData.property.address,
-      unit: saleData.unit?.name,
+    invoiceNumber: data.invoiceNumber,
+    invoiceDate: data.date,
+    dueDate: data.dueDate,
+    type: data.type,
+    status: data.status,
+    business: {
+      name: data.owner.businessName,
+      ownerName: data.owner.name,
+      tinNumber: data.owner.tinNumber,
+      address: data.owner.address,
+      phone: data.owner.phone,
+      email: data.owner.email,
+      bankAccount: data.owner.bankAccount,
+      bankName: data.owner.bankName,
     },
-
-    owner: {
-      businessName: ownerData.businessName || ownerData.company || "Akeray Properties",
-      fullName: ownerData.name || ownerData.fullName,
-      tinNumber: ownerData.tinNumber || "0000000000",
-      address: ownerData.address,
-      phone: ownerData.phone,
-      email: ownerData.email,
-      website: ownerData.website,
+    customer: data.customer,
+    property: data.property,
+    financial: {
+      baseAmount: data.amount,
+      vatAmount: data.vatAmount,
+      totalAmount: data.total,
+      currency: "ETB",
+      month: data.month,
     },
-
-    customer: {
-      name: saleData.buyer.name,
-      address: saleData.buyer.address || "Addis Ababa, Ethiopia",
-      phone: saleData.buyer.phone,
-      email: saleData.buyer.email,
-    },
-
-    items: [
-      {
-        description: `Property Sale - ${saleData.property.name}${saleData.unit ? ` - ${saleData.unit.name}` : ""}`,
-        quantity: 1,
-        unitPrice: subtotal,
-        total: subtotal,
-      },
+    terms: "Payment due within 30 days. Late payment fee applies after grace period.",
+    paymentInstructions: [
+      "Payment can be made via Bank Transfer or Mobile Money",
+      `Bank Transfer: ${data.owner.bankName || "Commercial Bank of Ethiopia"} - Account: ${data.owner.bankAccount || "1000123456789"}`,
+      `Mobile Money: CBE Birr, M-Birr to ${data.owner.phone}`,
+      `Reference: ${data.invoiceNumber} when making payment`,
+      "Late payment fee of 500 ETB applies after due date",
     ],
-
-    subtotal,
-    vatRate,
-    vatAmount,
-    total,
-
-    paymentMethod: paymentData.method,
-    paymentTerms: "Payment due within 7 days",
-    notes: paymentData.notes,
   };
 };
